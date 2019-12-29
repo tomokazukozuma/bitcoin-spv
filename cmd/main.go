@@ -8,13 +8,9 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 func main() {
-	k := util.NewKey()
-	k.GenerateKey()
-	log.Printf("key: %+v, %+v, %+v", k.PrivateKey.D.Bytes(), k.PublicKey.X.Bytes(), k.PublicKey.Y.Bytes())
 
 	c := client.NewClient("testnet-seed.bitcoin.petertodd.org:18333")
 	defer c.Conn.Close()
