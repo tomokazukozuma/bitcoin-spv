@@ -7,14 +7,17 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 type Wallet struct {
 	Client  *client.Client
+	Key     *util.Key
 	Balance uint64
 }
 
 func NewWallet(client *client.Client) *Wallet {
+
 	return &Wallet{
 		Client:  client,
 		Balance: 0,
