@@ -3,6 +3,9 @@ package common
 import (
 	"bytes"
 	"encoding/binary"
+	"log"
+
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 const MessageLen = 24
@@ -47,4 +50,13 @@ func DecodeMessageHeader(b [MessageLen]byte) *Message {
 		Length:   binary.LittleEndian.Uint32(b[16:20]),
 		Checksum: checksum,
 	}
+}
+
+func IsValidChecksum(checksum [4]byte, payload []byte) bool {
+	hashedPayload := util.Hash256(payload)
+	var payloadChecksum [4]byte
+	copy(payloadChecksum[:], hashedPayload[0:4])
+	log.Printf("checksum: %+v", checksum)
+	log.Printf("payloadChecksum: %+v", payloadChecksum)
+	return checksum == payloadChecksum
 }
