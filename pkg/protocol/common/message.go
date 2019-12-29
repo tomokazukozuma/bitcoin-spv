@@ -18,6 +18,18 @@ type Message struct {
 	Payload  []byte
 }
 
+func NewMessage(command [12]byte, payload []byte) *Message {
+	var checksum [4]byte
+	hashedMsg := util.Hash256(payload)
+	copy(checksum[:], hashedMsg[0:4])
+	return &Message{
+		Magic:    binary.LittleEndian.Uint32([]byte{0x0B, 0x11, 0x09, 0x07}),
+		Command:  command,
+		Length:   uint32(len(payload)),
+		Checksum: checksum,
+		Payload:  payload,
+	}
+}
 func (m *Message) Encode() []byte {
 	var (
 		magic  [4]byte
