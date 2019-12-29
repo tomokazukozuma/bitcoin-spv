@@ -47,7 +47,7 @@ func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) *Filterload
 }
 
 // CommandName return message's command name.
-func (f *Filterload) CommandName() [12]byte {
+func (f *Filterload) Command() [12]byte {
 	var commandName [12]byte
 	copy(commandName[:], "filterload")
 	return commandName
