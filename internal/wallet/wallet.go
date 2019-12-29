@@ -22,10 +22,14 @@ func NewWallet(client *client.Client) *Wallet {
 }
 
 func (w *Wallet) Handshake() error {
+	var recvVerack, recvVersion bool
 	for {
+		if recvVerack && recvVersion {
+			return nil
+		}
 		buf, err := w.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		var header [24]byte
@@ -38,7 +42,9 @@ func (w *Wallet) Handshake() error {
 
 		if bytes.HasPrefix(msg.Command[:], []byte("verack")) {
 			log.Printf("receive verack: %+v", payload)
+			recvVerack = true
 		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
+			recvVersion = true
 			log.Printf("receive version: %+v", payload)
 			_, err := w.Client.SendMessage(&message.Verack{})
 			if err != nil {

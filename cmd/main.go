@@ -40,7 +40,9 @@ func main() {
 	}
 
 	wallet := wallet.NewWallet(c)
-	wallet.Handshake()
+	if err := wallet.Handshake(); err != nil {
+		log.Fatal(err)
+	}
 
 	log.Printf("finish")
 }
