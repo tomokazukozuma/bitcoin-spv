@@ -12,7 +12,6 @@ type Inv struct {
 	Inventory []*common.InvVect
 }
 
-// NewInv create new inv.
 func NewInv(count *common.VarInt, inventory []*common.InvVect) *Inv {
 	return &Inv{
 		Count:     count,
@@ -20,7 +19,6 @@ func NewInv(count *common.VarInt, inventory []*common.InvVect) *Inv {
 	}
 }
 
-// DecodeInv deocode byte to inv.
 func DecodeInv(b []byte) (*Inv, error) {
 	inventory := []*common.InvVect{}
 	varint, err := common.DecodeVarInt(b)
@@ -46,8 +44,10 @@ func DecodeInv(b []byte) (*Inv, error) {
 }
 
 // CommandName return "inv".
-func (inv *Inv) CommandName() string {
-	return "inv"
+func (inv *Inv) Command() [12]byte {
+	var commandName [12]byte
+	copy(commandName[:], "inv")
+	return commandName
 }
 
 // Encode encode inv.

@@ -28,7 +28,6 @@ func NewInvVect(invType uint32, hash [32]byte) *InvVect {
 	}
 }
 
-// DecodeInvVect decode byte slice to InvVect
 func DecodeInvVect(b []byte) (*InvVect, error) {
 	if len(b) != InventoryVectorSize {
 		return nil, fmt.Errorf("Decode to InvVect failed, invalid input: %v", b)
