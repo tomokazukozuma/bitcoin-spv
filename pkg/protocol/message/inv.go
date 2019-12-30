@@ -43,14 +43,12 @@ func DecodeInv(b []byte) (*Inv, error) {
 	}, nil
 }
 
-// CommandName return "inv".
 func (inv *Inv) Command() [12]byte {
 	var commandName [12]byte
 	copy(commandName[:], "inv")
 	return commandName
 }
 
-// Encode encode inv.
 func (inv *Inv) Encode() []byte {
 	inventoryBytes := [][]byte{}
 	for _, invvect := range inv.Inventory {

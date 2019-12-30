@@ -125,9 +125,23 @@ func (w *Wallet) MessageHandler() {
 			log.Printf("msg: %+v", msg)
 			b, _ := w.Client.ReceiveMessage(msg.Length)
 			inv, _ := message.DecodeInv(b)
-			log.Printf("inv: %+v", inv)
+			log.Printf("inv.Count: %+v", inv.Count)
+
+			inventory := []*common.InvVect{}
+			for _, iv := range inv.Inventory {
+				if iv.Type == common.InvTypeMsgBlock {
+					inventory = append(inventory, common.NewInvVect(common.InvTypeMsgFilteredBlock, iv.Hash))
+				} else {
+					//inventory = append(inventory, iv)
+				}
+			}
+			w.Client.SendMessage(message.NewGetData(inventory))
+		} else if bytes.HasPrefix(msg.Command[:], []byte("merkleblock")) {
+			b, _ := w.Client.ReceiveMessage(msg.Length)
+			mb, _ := message.DecodeMerkleBlock(b)
+			log.Printf("merkleblock: %+v", mb)
 		} else {
-			log.Printf("receive other")
+			log.Printf("receive : other")
 			w.Client.ReceiveMessage(msg.Length)
 		}
 	}

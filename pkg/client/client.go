@@ -22,7 +22,7 @@ func NewClient(ip string) *Client {
 
 func (c *Client) SendMessage(msg message.Message) (int, error) {
 	message := common.NewMessage(msg.Command(), msg.Encode())
-	log.Printf("send command: %s", string(message.Command[:]))
+	log.Printf("send    : %s", string(message.Command[:]))
 	return c.Conn.Write(message.Encode())
 }
 
