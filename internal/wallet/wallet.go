@@ -3,6 +3,7 @@ package wallet
 import (
 	"bytes"
 	"log"
+	"time"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
@@ -31,6 +32,29 @@ func NewWallet(client *client.Client) *Wallet {
 }
 
 func (w *Wallet) Handshake() error {
+	addrFrom := &common.NetworkAddress{
+		Services: uint64(1),
+		IP: [16]byte{
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x7F, 0x00, 0x00, 0x01,
+		},
+		Port: 8333,
+	}
+	v := &message.Version{
+		Version:     uint32(70015),
+		Services:    uint64(1),
+		Timestamp:   uint64(time.Now().Unix()),
+		AddrRecv:    addrFrom,
+		AddrFrom:    addrFrom,
+		Nonce:       uint64(0),
+		UserAgent:   common.NewVarStr([]byte("")),
+		StartHeight: uint32(0),
+		Relay:       false,
+	}
+	_, err := w.Client.SendMessage(v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var recvVerack, recvVersion bool
 	for {
 		if recvVerack && recvVersion {
