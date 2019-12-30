@@ -56,6 +56,9 @@ func DecodeMessageHeader(b [MessageLen]byte) *Message {
 
 	copy(command[:], b[4:16])
 	copy(checksum[:], b[20:MessageLen])
+
+	log.Printf("receive command: %s", string(command[:]))
+
 	return &Message{
 		Magic:    binary.LittleEndian.Uint32(b[0:4]),
 		Command:  command,

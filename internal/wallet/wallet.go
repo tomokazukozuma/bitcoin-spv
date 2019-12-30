@@ -22,7 +22,8 @@ func NewWallet(client *client.Client) *Wallet {
 	key := util.NewKey()
 	key.GenerateKey()
 	address := util.EncodeAddress(bytes.Join([][]byte{key.PublicKey.X.Bytes(), key.PublicKey.Y.Bytes()}, []byte{}))
-	log.Printf("address: %s", address)
+	//log.Printf("address: %s", address)
+	//log.Printf("key: %+v, %+v", key.PrivateKey.X.Bytes(), key.PrivateKey.Y.Bytes())
 	return &Wallet{
 		Client:  client,
 		Key:     key,
@@ -52,37 +53,82 @@ func (w *Wallet) Handshake() error {
 	}
 	_, err := w.Client.SendMessage(v)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var recvVerack, recvVersion bool
 	for {
 		if recvVerack && recvVersion {
+			log.Printf("success handshake")
 			return nil
 		}
 		buf, err := w.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
+			log.Printf("handshake Receive message error: %+v", err)
 			return err
 		}
 
 		var header [24]byte
 		copy(header[:], buf)
 		msg := common.DecodeMessageHeader(header)
-		payload, err := w.Client.ReceiveMessage(msg.Length)
+		_, err = w.Client.ReceiveMessage(msg.Length)
 		if err != nil {
 			return err
 		}
 
 		if bytes.HasPrefix(msg.Command[:], []byte("verack")) {
-			log.Printf("receive verack: %+v", payload)
 			recvVerack = true
 		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
 			recvVersion = true
-			log.Printf("receive version: %+v", payload)
 			_, err := w.Client.SendMessage(&message.Verack{})
 			if err != nil {
 				return err
 			}
+		}
+	}
+}
+
+func (w *Wallet) MessageHandler() {
+	for {
+		buf, err := w.Client.ReceiveMessage(common.MessageLen)
+		if err != nil {
+			//log.Printf("message handler err: %+v", err)
+			log.Fatal("message handler err: ", err)
+			//continue
+		}
+		var header [24]byte
+		copy(header[:], buf)
+		msg := common.DecodeMessageHeader(header)
+
+		if bytes.HasPrefix(msg.Command[:], []byte("verack")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("sendheaders")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("sendcmpct")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("ping")) {
+			b, _ := w.Client.ReceiveMessage(msg.Length)
+			ping := message.DecodePing(b)
+			pong := message.Pong{
+				Nonce: ping.Nonce,
+			}
+			w.Client.SendMessage(&pong)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("addr")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("getheaders")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("feefilter")) {
+			w.Client.ReceiveMessage(msg.Length)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("inv")) {
+			log.Printf("msg: %+v", msg)
+			b, _ := w.Client.ReceiveMessage(msg.Length)
+			inv, _ := message.DecodeInv(b)
+			log.Printf("inv: %+v", inv)
+		} else {
+			log.Printf("receive other")
+			w.Client.ReceiveMessage(msg.Length)
 		}
 	}
 }
