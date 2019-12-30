@@ -1,6 +1,10 @@
 package common
 
-import "encoding/binary"
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+)
 
 type VarInt struct {
 	Data uint64
@@ -35,4 +39,29 @@ func (v *VarInt) Encode() []byte {
 		return b
 	}
 	return []byte{byte(v.Data)}
+}
+
+func DecodeVarInt(bs []byte) (*VarInt, error) {
+	if bytes.HasPrefix(bs, []byte{0xff}) {
+		return &VarInt{
+			Data: binary.LittleEndian.Uint64(bs[1:9]),
+		}, nil
+	}
+	if bytes.HasPrefix(bs, []byte{0xfe}) {
+		return &VarInt{
+			Data: uint64(binary.LittleEndian.Uint32(bs[1:5])),
+		}, nil
+	}
+	if bytes.HasPrefix(bs, []byte{0xfd}) {
+		return &VarInt{
+			Data: uint64(binary.LittleEndian.Uint16(bs[1:3])),
+		}, nil
+	}
+	if bytes.Compare(bs, []byte{0xfd}) < 0 {
+		if len(bs) == 0 {
+			return nil, fmt.Errorf("Decode VarInt failed, invalid input: %v", bs)
+		}
+		return &VarInt{Data: uint64(bs[0])}, nil
+	}
+	return nil, fmt.Errorf("Decode VarInt failed, invalid input: %v", bs)
 }
