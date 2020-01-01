@@ -73,13 +73,13 @@ func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
 
 	b = b[84:]
 
-	hasheCount, err := common.DecodeVarInt(b)
+	hashCount, err := common.DecodeVarInt(b)
 	if err != nil {
 		return nil, err
 	}
-	hashes := [][32]byte{}
-	b = b[len(hasheCount.Encode()):]
-	for i := 0; uint64(i) < hasheCount.Data; i++ {
+	var hashes [][32]byte
+	b = b[len(hashCount.Encode()):]
+	for i := 0; uint64(i) < hashCount.Data; i++ {
 		var byteArray [32]byte
 		copy(byteArray[:], b[:32])
 		b = b[32:]
@@ -101,7 +101,7 @@ func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
 		Bits:              bits,
 		Nonce:             nonce,
 		TotalTransactions: totalTransactions,
-		HashCount:         hasheCount,
+		HashCount:         hashCount,
 		Hashes:            hashes,
 		FlagBytes:         flagBytes,
 		Flags:             flags,
