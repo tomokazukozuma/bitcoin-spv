@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -17,7 +16,9 @@ import (
 func main() {
 
 	// connect tcp
-	c := client.NewClient("testnet-seed.bitcoin.petertodd.org:18333")
+	c := client.NewClient("[2604:a880:2:d0::2065:5001]:18333")
+	//c := client.NewClient("[2604:a880:400:d0::4ac1:9001]:18333")
+	//[2604:a880:2:d0::2065:5001]:18333 <-取得できたノード
 	defer c.Conn.Close()
 	log.Printf("remote addr： %s", c.Conn.RemoteAddr().String())
 
@@ -28,18 +29,21 @@ func main() {
 	}
 
 	// send filterload
-	pubkey := bytes.Join([][]byte{wallet.Key.PublicKey.X.Bytes(), wallet.Key.PublicKey.Y.Bytes()}, []byte{})
-	wallet.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{pubkey}))
+	publicKeyHash := util.Hash160(wallet.Key.PublicKey.SerializeUncompressed())
+	wallet.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{publicKeyHash}))
 
 	// send getblocks
-	startBlockHash, err := hex.DecodeString("0000000000000657bda6681e1a3d1aac92d09d31721e8eedbca98cac73e93226")
+	startBlockHash, err := hex.DecodeString("000000000000020c54ca0a429835b14ba2f1629562547d39a0523af5dd518865")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+	hashStop := message.ZeroHash[:]
 	var arr [32]byte
 	copy(arr[:], util.ReverseBytes(startBlockHash))
-	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{arr}, message.ZeroHash)
+	var arrHashStop [32]byte
+	copy(arrHashStop[:], util.ReverseBytes(hashStop))
+	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{arr}, arrHashStop)
 	wallet.Client.SendMessage(getblocks)
 
 	// receiving message
