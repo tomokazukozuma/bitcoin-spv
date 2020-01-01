@@ -2,8 +2,8 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"log"
-	"time"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
@@ -21,9 +21,8 @@ type Wallet struct {
 func NewWallet(client *client.Client) *Wallet {
 	key := util.NewKey()
 	key.GenerateKey()
-	address := util.EncodeAddress(bytes.Join([][]byte{key.PublicKey.X.Bytes(), key.PublicKey.Y.Bytes()}, []byte{}))
-	//log.Printf("address: %s", address)
-	//log.Printf("key: %+v, %+v", key.PrivateKey.X.Bytes(), key.PrivateKey.Y.Bytes())
+	serializedPubKey := key.PublicKey.SerializeUncompressed()
+	address := util.EncodeAddress(serializedPubKey)
 	return &Wallet{
 		Client:  client,
 		Key:     key,
@@ -33,24 +32,7 @@ func NewWallet(client *client.Client) *Wallet {
 }
 
 func (w *Wallet) Handshake() error {
-	addrFrom := &common.NetworkAddress{
-		Services: uint64(1),
-		IP: [16]byte{
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x7F, 0x00, 0x00, 0x01,
-		},
-		Port: 8333,
-	}
-	v := &message.Version{
-		Version:     uint32(70015),
-		Services:    uint64(1),
-		Timestamp:   uint64(time.Now().Unix()),
-		AddrRecv:    addrFrom,
-		AddrFrom:    addrFrom,
-		Nonce:       uint64(0),
-		UserAgent:   common.NewVarStr([]byte("")),
-		StartHeight: uint32(0),
-		Relay:       false,
-	}
+	v := message.NewVersion()
 	_, err := w.Client.SendMessage(v)
 	if err != nil {
 		return err
@@ -92,9 +74,7 @@ func (w *Wallet) MessageHandler() {
 	for {
 		buf, err := w.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
-			//log.Printf("message handler err: %+v", err)
 			log.Fatal("message handler err: ", err)
-			//continue
 		}
 		var header [24]byte
 		copy(header[:], buf)
@@ -131,8 +111,6 @@ func (w *Wallet) MessageHandler() {
 			for _, iv := range inv.Inventory {
 				if iv.Type == common.InvTypeMsgBlock {
 					inventory = append(inventory, common.NewInvVect(common.InvTypeMsgFilteredBlock, iv.Hash))
-				} else {
-					//inventory = append(inventory, iv)
 				}
 			}
 			w.Client.SendMessage(message.NewGetData(inventory))
@@ -140,6 +118,12 @@ func (w *Wallet) MessageHandler() {
 			b, _ := w.Client.ReceiveMessage(msg.Length)
 			mb, _ := message.DecodeMerkleBlock(b)
 			log.Printf("merkleblock: %+v", mb)
+			h := mb.GetBlockHash()
+			hexHash := hex.EncodeToString(util.ReverseBytes(h[:]))
+			log.Printf("BlockHash: %s", hexHash)
+			log.Printf("Hashes length: %+v", len(mb.Hashes))
+			txs := mb.Validate()
+			log.Printf("txs: %+v", txs)
 		} else {
 			log.Printf("receive : other")
 			w.Client.ReceiveMessage(msg.Length)
