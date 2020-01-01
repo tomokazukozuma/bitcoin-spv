@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
+
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
@@ -22,13 +24,16 @@ type GetBlocks struct {
 }
 
 func NewGetBlocks(version uint32, blockLocatorHashes [][32]byte, hashStop [32]byte) *GetBlocks {
+	var reversedHashStop [32]byte
+	copy(reversedHashStop[:], util.ReverseBytes(hashStop[:]))
+
 	length := len(blockLocatorHashes)
 	hashCount := common.NewVarInt(uint64(length))
 	return &GetBlocks{
 		Version:            version,
 		HashCount:          hashCount,
 		BlockLocatorHashes: blockLocatorHashes,
-		HashStop:           hashStop,
+		HashStop:           reversedHashStop,
 	}
 }
 

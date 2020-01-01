@@ -38,12 +38,9 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	hashStop := message.ZeroHash[:]
-	var arr [32]byte
-	copy(arr[:], util.ReverseBytes(startBlockHash))
-	var arrHashStop [32]byte
-	copy(arrHashStop[:], util.ReverseBytes(hashStop))
-	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{arr}, arrHashStop)
+	var reversedStartBlockHash [32]byte
+	copy(reversedStartBlockHash[:], util.ReverseBytes(startBlockHash))
+	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHash}, message.ZeroHash)
 	wallet.Client.SendMessage(getblocks)
 
 	// receiving message
