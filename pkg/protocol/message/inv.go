@@ -9,10 +9,10 @@ import (
 
 type Inv struct {
 	Count     *common.VarInt
-	Inventory []*common.InvVect
+	Inventory []*InvVect
 }
 
-func NewInv(count *common.VarInt, inventory []*common.InvVect) *Inv {
+func NewInv(count *common.VarInt, inventory []*InvVect) *Inv {
 	return &Inv{
 		Count:     count,
 		Inventory: inventory,
@@ -20,18 +20,18 @@ func NewInv(count *common.VarInt, inventory []*common.InvVect) *Inv {
 }
 
 func DecodeInv(b []byte) (*Inv, error) {
-	inventory := []*common.InvVect{}
+	inventory := []*InvVect{}
 	varint, err := common.DecodeVarInt(b)
 	if err != nil {
 		return nil, err
 	}
 	length := len(varint.Encode())
-	if uint64(len(b[length:])) != uint64(common.InventoryVectorSize)*varint.Data {
+	if uint64(len(b[length:])) != uint64(InventoryVectorSize)*varint.Data {
 		return nil, fmt.Errorf("Decode to Inv failed, invalid input: %v", b)
 	}
 	b = b[length:]
 	for i := 0; uint64(i) < varint.Data; i++ {
-		invvect, err := common.DecodeInvVect(b[i*common.InventoryVectorSize : (i+1)*common.InventoryVectorSize])
+		invvect, err := DecodeInvVect(b[i*InventoryVectorSize : (i+1)*InventoryVectorSize])
 		if err != nil {
 			return nil, err
 		}

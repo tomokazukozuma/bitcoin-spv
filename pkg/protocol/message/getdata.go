@@ -8,10 +8,10 @@ import (
 
 type GetData struct {
 	Count     *common.VarInt
-	Inventory []*common.InvVect
+	Inventory []*InvVect
 }
 
-func NewGetData(inventory []*common.InvVect) *GetData {
+func NewGetData(inventory []*InvVect) *GetData {
 	length := len(inventory)
 	count := common.NewVarInt(uint64(length))
 	return &GetData{
