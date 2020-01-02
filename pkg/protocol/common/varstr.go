@@ -1,6 +1,9 @@
 package common
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 type VarStr struct {
 	Length *VarInt
@@ -24,4 +27,21 @@ func (s *VarStr) Encode() []byte {
 	},
 		[]byte{},
 	)
+}
+
+func DecodeVarStr(b []byte) (*VarStr, error) {
+	length, err := DecodeVarInt(b)
+	if err != nil {
+		return nil, err
+	}
+	varintLen := len(length.Encode())
+	varstrLen := length.Data + uint64(varintLen)
+	if uint64(len(b)) < varstrLen {
+		return nil, fmt.Errorf("Decode varstr failed, invalid input: %v", b)
+	}
+	str := b[varintLen:varstrLen]
+	return &VarStr{
+		Length: length,
+		Data:   str,
+	}, nil
 }

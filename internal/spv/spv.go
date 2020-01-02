@@ -112,7 +112,6 @@ func (w *SPV) MessageHandler() {
 				if iv.Type == message.InvTypeMsgBlock {
 					inventory = append(inventory, message.NewInvVect(message.InvTypeMsgFilteredBlock, iv.Hash))
 				}
-
 			}
 			w.Client.SendMessage(message.NewGetData(inventory))
 		} else if bytes.HasPrefix(msg.Command[:], []byte("merkleblock")) {
@@ -123,8 +122,18 @@ func (w *SPV) MessageHandler() {
 			hexHash := hex.EncodeToString(util.ReverseBytes(h[:]))
 			log.Printf("BlockHash: %s", hexHash)
 			log.Printf("Hashes length: %+v", len(mb.Hashes))
-			txs := mb.Validate()
-			log.Printf("txs: %+v", txs)
+			txHashes := mb.Validate()
+			log.Printf("txHashes: %+v", txHashes)
+			inventory := []*message.InvVect{}
+			for _, txHash := range txHashes {
+				inventory = append(inventory, message.NewInvVect(message.InvTypeMsgTx, txHash))
+			}
+			w.Client.SendMessage(message.NewGetData(inventory))
+		} else if bytes.HasPrefix(msg.Command[:], []byte("tx")) {
+			b, _ := w.Client.ReceiveMessage(msg.Length)
+			tx, _ := message.DecodeTx(b)
+			log.Printf("tx: %+v", tx)
+			log.Printf("TxID: %+v", tx.ID())
 		} else {
 			log.Printf("receive : other")
 			w.Client.ReceiveMessage(msg.Length)
