@@ -1,4 +1,4 @@
-package wallet
+package spv
 
 import (
 	"bytes"
@@ -11,19 +11,19 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
-type Wallet struct {
+type SPV struct {
 	Client  *client.Client
 	Key     *util.Key
 	Address string
 	Balance uint64
 }
 
-func NewWallet(client *client.Client) *Wallet {
+func NewSPV(client *client.Client) *SPV {
 	key := util.NewKey()
 	key.GenerateKey()
 	serializedPubKey := key.PublicKey.SerializeUncompressed()
 	address := util.EncodeAddress(serializedPubKey)
-	return &Wallet{
+	return &SPV{
 		Client:  client,
 		Key:     key,
 		Address: address,
@@ -31,9 +31,9 @@ func NewWallet(client *client.Client) *Wallet {
 	}
 }
 
-func (w *Wallet) Handshake() error {
+func (s *SPV) Handshake() error {
 	v := message.NewVersion()
-	_, err := w.Client.SendMessage(v)
+	_, err := s.Client.SendMessage(v)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (w *Wallet) Handshake() error {
 			log.Printf("success handshake")
 			return nil
 		}
-		buf, err := w.Client.ReceiveMessage(common.MessageLen)
+		buf, err := s.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
 			log.Printf("handshake Receive message error: %+v", err)
 			return err
@@ -53,7 +53,7 @@ func (w *Wallet) Handshake() error {
 		var header [24]byte
 		copy(header[:], buf)
 		msg := common.DecodeMessageHeader(header)
-		_, err = w.Client.ReceiveMessage(msg.Length)
+		_, err = s.Client.ReceiveMessage(msg.Length)
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func (w *Wallet) Handshake() error {
 			recvVerack = true
 		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
 			recvVersion = true
-			_, err := w.Client.SendMessage(&message.Verack{})
+			_, err := s.Client.SendMessage(&message.Verack{})
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,7 @@ func (w *Wallet) Handshake() error {
 	}
 }
 
-func (w *Wallet) MessageHandler() {
+func (w *SPV) MessageHandler() {
 	for {
 		buf, err := w.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
@@ -130,7 +130,3 @@ func (w *Wallet) MessageHandler() {
 		}
 	}
 }
-
-//func (w *Wallet) GetAddress() string {
-//	return
-//}

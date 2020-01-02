@@ -6,11 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
-
-	"github.com/tomokazukozuma/bitcoin-spv/internal/wallet"
+	"github.com/tomokazukozuma/bitcoin-spv/internal/spv"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 func main() {
@@ -23,14 +22,14 @@ func main() {
 	log.Printf("remote addr： %s", c.Conn.RemoteAddr().String())
 
 	// handshake
-	wallet := wallet.NewWallet(c)
-	if err := wallet.Handshake(); err != nil {
+	spv := spv.NewSPV(c)
+	if err := spv.Handshake(); err != nil {
 		log.Fatal("handshake error: ", err)
 	}
 
 	// send filterload
-	publicKeyHash := util.Hash160(wallet.Key.PublicKey.SerializeUncompressed())
-	wallet.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{publicKeyHash}))
+	publicKeyHash := util.Hash160(spv.Key.PublicKey.SerializeUncompressed())
+	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{publicKeyHash}))
 
 	// send getblocks
 	startBlockHash, err := hex.DecodeString("000000000000020c54ca0a429835b14ba2f1629562547d39a0523af5dd518865")
@@ -41,9 +40,9 @@ func main() {
 	var reversedStartBlockHash [32]byte
 	copy(reversedStartBlockHash[:], util.ReverseBytes(startBlockHash))
 	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHash}, message.ZeroHash)
-	wallet.Client.SendMessage(getblocks)
+	spv.Client.SendMessage(getblocks)
 
 	// receiving message
-	wallet.MessageHandler()
+	spv.MessageHandler()
 	log.Printf("finish")
 }
