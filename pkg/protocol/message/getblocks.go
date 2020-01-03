@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
-
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 var ZeroHash = [32]byte{

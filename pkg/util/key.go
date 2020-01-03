@@ -3,7 +3,6 @@ package util
 import (
 	"crypto/rand"
 	"io/ioutil"
-	"os"
 
 	"github.com/btcsuite/btcd/btcec"
 )
@@ -33,7 +32,7 @@ func (k *Key) GenerateKey() error {
 		if err != nil {
 			return err
 		}
-		writeFile(randomBytes)
+		writeFile(keypath, randomBytes)
 		privateKey, publicKey := btcec.PrivKeyFromBytes(btcec.S256(), randomBytes)
 		k.PrivateKey = privateKey
 		k.PublicKey = publicKey
@@ -47,20 +46,4 @@ func generateRandom() ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
-}
-
-func writeFile(b []byte) error {
-	err := ioutil.WriteFile(keypath, b, 0666)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func existsFile(filename string) bool {
-	_, err := os.Stat(filename)
-	if err != nil {
-		return !os.IsNotExist(err)
-	}
-	return err == nil
 }
