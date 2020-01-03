@@ -3,6 +3,7 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math"
 
@@ -32,7 +33,7 @@ func (g *MerkleBlock) Command() [12]byte {
 
 // BlockHash return hash of this merkleblock.
 // hash256 of version to nonce.
-func (m *MerkleBlock) GetBlockHash() [32]byte {
+func (m *MerkleBlock) GetBlockHash() string {
 	var res [32]byte
 	versionByte := make([]byte, 4)
 	timestampByte := make([]byte, 4)
@@ -54,7 +55,7 @@ func (m *MerkleBlock) GetBlockHash() [32]byte {
 	}, []byte{})
 
 	copy(res[:], util.Hash256(bs))
-	return res
+	return hex.EncodeToString(util.ReverseBytes(res[:]))
 }
 
 func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
