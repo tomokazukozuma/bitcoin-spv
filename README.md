@@ -7,8 +7,9 @@
 3. 秘密鍵と公開鍵のフォーマットとその意味（圧縮、非圧縮によるフォーマット）
 
 ## Bitocin Nodeとの通信
-1. メッセージ構成
-2. ハンドシェイク（Version/Verack）
+1. Bitcoin Protocol(https://bitcoin.org/ja/developer-reference#protocol-versions)
+2. メッセージ構成
+3. ハンドシェイク（Version/Verack）
 
 ## Bitcoinの残高
 1. UTXO
