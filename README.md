@@ -19,6 +19,8 @@
 6. Markle Path
 
 ## Bitcoinの送金
-1. Bitcoin Script
+1. Bitcoin Script(P2PK/P2PKH/P2SH)
 2. UTXOの構築
 3. 署名処理
+4. 手数料計算（satoshi/byte）
+5. segwitの場合の送金と手数料
