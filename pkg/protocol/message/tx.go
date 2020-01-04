@@ -19,6 +19,17 @@ type Tx struct {
 	LockTime   uint32
 }
 
+func NweTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) *Tx {
+	return &Tx{
+		Version:    version,
+		TxInCount:  common.NewVarInt(uint64(len(txin))),
+		TxIn:       txin,
+		TxOutCount: common.NewVarInt(uint64(len(txout))),
+		TxOut:      txout,
+		LockTime:   locktime,
+	}
+}
+
 func (tx *Tx) ID() [32]byte {
 	var res [32]byte
 	hash := util.Hash256(tx.Encode())
