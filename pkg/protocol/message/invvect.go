@@ -40,11 +40,11 @@ func DecodeInvVect(b []byte) (*InvVect, error) {
 	}, nil
 }
 
-func (vect *InvVect) Encode() []byte {
+func (iv *InvVect) Encode() []byte {
 	invType := make([]byte, 4)
-	binary.LittleEndian.PutUint32(invType, vect.Type)
+	binary.LittleEndian.PutUint32(invType, iv.Type)
 	return bytes.Join([][]byte{
 		invType,
-		vect.Hash[:],
+		iv.Hash[:],
 	}, []byte{})
 }
