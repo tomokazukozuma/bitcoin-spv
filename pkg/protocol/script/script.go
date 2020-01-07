@@ -66,9 +66,9 @@ func CreateLockingScriptForPKH(pubkeyHash []byte) []byte {
 	}, []byte{})
 }
 
-func CreateUnlockingScriptForPKH(signature, publickkey []byte) *common.VarStr {
+func CreateUnlockingScriptForPKH(signature, publickey []byte) *common.VarStr {
 	return common.NewVarStr(bytes.Join([][]byte{
 		OpPushData(signature),
-		OpPushData(publickkey),
+		OpPushData(publickey),
 	}, []byte{}))
 }

@@ -40,6 +40,14 @@ func (k *Key) GenerateKey() error {
 	return nil
 }
 
+func (k *Key) Sign(message []byte) ([]byte, error) {
+	signature, err := k.PrivateKey.Sign(message)
+	if err != nil {
+		return nil, err
+	}
+	return signature.Serialize(), nil
+}
+
 func generateRandom() ([]byte, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {

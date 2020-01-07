@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
@@ -19,7 +20,13 @@ type Tx struct {
 	LockTime   uint32
 }
 
-func NweTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) *Tx {
+type Utxo struct {
+	Hash  [32]byte
+	N     uint32
+	TxOut *TxOut
+}
+
+func NewTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) *Tx {
 	return &Tx{
 		Version:    version,
 		TxInCount:  common.NewVarInt(uint64(len(txin))),
@@ -28,6 +35,12 @@ func NweTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) *Tx {
 		TxOut:      txout,
 		LockTime:   locktime,
 	}
+}
+
+func (tx *Tx) Command() [12]byte {
+	var commandName [12]byte
+	copy(commandName[:], "tx")
+	return commandName
 }
 
 func (tx *Tx) ID() [32]byte {
@@ -110,4 +123,18 @@ func DecodeTx(b []byte) (*Tx, error) {
 		TxOut:      txOuts,
 		LockTime:   lockTime,
 	}, nil
+}
+
+func (tx *Tx) GetUtxo(pubkeyHash []byte) []*Utxo {
+	var utxo []*Utxo
+	for index, txout := range tx.TxOut {
+		if bytes.HasPrefix(txout.LockingScript.Data, script.CreateLockingScriptForPKH(pubkeyHash)) {
+			utxo = append(utxo, &Utxo{
+				Hash:  tx.ID(),
+				N:     uint32(index),
+				TxOut: txout,
+			})
+		}
+	}
+	return utxo
 }

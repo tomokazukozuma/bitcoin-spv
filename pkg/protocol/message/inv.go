@@ -50,7 +50,7 @@ func (inv *Inv) Command() [12]byte {
 }
 
 func (inv *Inv) Encode() []byte {
-	inventoryBytes := [][]byte{}
+	var inventoryBytes [][]byte
 	for _, invvect := range inv.Inventory {
 		inventoryBytes = append(inventoryBytes, invvect.Encode())
 	}
