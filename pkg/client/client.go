@@ -4,8 +4,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
 )
 
 type Client struct {
@@ -20,7 +20,7 @@ func NewClient(ip string) *Client {
 	return &Client{Conn: conn}
 }
 
-func (c *Client) SendMessage(msg message.Message) (int, error) {
+func (c *Client) SendMessage(msg protocol.Message) (int, error) {
 	message := common.NewMessage(msg.Command(), msg.Encode())
 	log.Printf("send    : %s", string(message.Command[:]))
 	return c.Conn.Write(message.Encode())

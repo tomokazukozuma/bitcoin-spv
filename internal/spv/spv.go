@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/script"
-
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 

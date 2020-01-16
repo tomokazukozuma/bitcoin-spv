@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/script"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
