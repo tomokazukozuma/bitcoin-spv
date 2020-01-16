@@ -62,7 +62,7 @@ func (s *SPV) Handshake() error {
 			recvVerack = true
 		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
 			recvVersion = true
-			_, err := s.Client.SendMessage(&message.Verack{})
+			_, err := s.Client.SendMessage(message.NewVerack())
 			if err != nil {
 				return err
 			}
@@ -105,18 +105,16 @@ func (s *SPV) MessageHandler() error {
 		} else if bytes.HasPrefix(msg.Command[:], []byte("feefilter")) {
 		} else if bytes.HasPrefix(msg.Command[:], []byte("ping")) {
 			ping := message.DecodePing(b)
-			pong := message.Pong{
-				Nonce: ping.Nonce,
-			}
-			s.Client.SendMessage(&pong)
+			pong := message.NewPong(ping.Nonce)
+			s.Client.SendMessage(pong)
 		} else if bytes.HasPrefix(msg.Command[:], []byte("inv")) {
 			inv, _ := message.DecodeInv(b)
 			log.Printf("inv.Count: %+v", inv.Count)
 
-			inventory := []*message.InvVect{}
+			inventory := []*common.InvVect{}
 			for _, iv := range inv.Inventory {
-				if iv.Type == message.InvTypeMsgBlock {
-					inventory = append(inventory, message.NewInvVect(message.InvTypeMsgFilteredBlock, iv.Hash))
+				if iv.Type == common.InvTypeMsgBlock {
+					inventory = append(inventory, common.NewInvVect(common.InvTypeMsgFilteredBlock, iv.Hash))
 				}
 			}
 			log.Printf("inventory len: %+v", len(inventory))
@@ -147,9 +145,9 @@ func (s *SPV) MessageHandler() error {
 				stringHash := hex.EncodeToString(util.ReverseBytes(txHash[:]))
 				log.Printf("string txHash: %s", stringHash)
 			}
-			var inventory []*message.InvVect
+			var inventory []*common.InvVect
 			for _, txHash := range txHashes {
-				inventory = append(inventory, message.NewInvVect(message.InvTypeMsgTx, txHash))
+				inventory = append(inventory, common.NewInvVect(common.InvTypeMsgTx, txHash))
 			}
 			_, err := s.Client.SendMessage(message.NewGetData(inventory))
 			if err != nil {
@@ -169,11 +167,12 @@ func (s *SPV) MessageHandler() error {
 				log.Fatalf("createTxIn: %+v", err)
 			}
 
-			transaction = message.NewTx(uint32(1), txin, txout, uint32(0))
+			transaction = message.NewTx(uint32(1), txin, txout, uint32(0)).(*message.Tx)
 			inv := message.NewInv(
 				common.NewVarInt(uint64(1)),
-				[]*message.InvVect{message.NewInvVect(message.InvTypeMsgTx, transaction.ID())},
-			)
+				[]*common.InvVect{common.NewInvVect(common.InvTypeMsgTx, transaction.ID())},
+			).(*message.Inv)
+
 			log.Printf("transaction: %+v", transaction)
 			log.Printf("transaction txin count: %+v", transaction.TxInCount.Data)
 			log.Printf("transaction txout count: %+v", transaction.TxOutCount.Data)
@@ -191,7 +190,7 @@ func (s *SPV) MessageHandler() error {
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
 			log.Printf("getdata: %+v", getData)
-			invs := getData.FilterInventoryWithType(message.InvTypeMsgTx)
+			invs := getData.FilterInventoryWithType(common.InvTypeMsgTx)
 			for _, invvect := range invs {
 				txID := transaction.ID()
 				if bytes.Equal(invvect.Hash[:], txID[:]) {

@@ -1,6 +1,12 @@
 package message
 
+import "github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
+
 type Verack struct{}
+
+func NewVerack() protocol.Message {
+	return &Verack{}
+}
 
 func (v *Verack) Command() [12]byte {
 	var commandName [12]byte

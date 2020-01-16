@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/spaolacci/murmur3"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
@@ -18,7 +19,7 @@ type Filterload struct {
 	NFlags     uint8
 }
 
-func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) *Filterload {
+func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) protocol.Message {
 	byteArray := make([]byte, size)
 	nTweak := make([]byte, 4)
 	for i := 0; i < cap(nTweak); i++ {

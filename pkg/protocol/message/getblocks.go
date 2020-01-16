@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
@@ -22,7 +23,7 @@ type GetBlocks struct {
 	HashStop           [32]byte
 }
 
-func NewGetBlocks(version uint32, blockLocatorHashes [][32]byte, hashStop [32]byte) *GetBlocks {
+func NewGetBlocks(version uint32, blockLocatorHashes [][32]byte, hashStop [32]byte) protocol.Message {
 	var reversedHashStop [32]byte
 	copy(reversedHashStop[:], util.ReverseBytes(hashStop[:]))
 

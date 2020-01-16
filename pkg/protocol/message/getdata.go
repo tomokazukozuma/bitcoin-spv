@@ -3,15 +3,16 @@ package message
 import (
 	"bytes"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
 type GetData struct {
 	Count     *common.VarInt
-	Inventory []*InvVect
+	Inventory []*common.InvVect
 }
 
-func NewGetData(inventory []*InvVect) *GetData {
+func NewGetData(inventory []*common.InvVect) protocol.Message {
 	length := len(inventory)
 	count := common.NewVarInt(uint64(length))
 	return &GetData{
@@ -40,9 +41,9 @@ func (g *GetData) Encode() []byte {
 func DecodeGetData(b []byte) (*GetData, error) {
 	count, _ := common.DecodeVarInt(b)
 	b = b[len(count.Encode()):]
-	var inventory []*InvVect
+	var inventory []*common.InvVect
 	for i := 0; uint64(i) < count.Data; i++ {
-		iv, _ := DecodeInvVect(b[:36*(i+1)])
+		iv, _ := common.DecodeInvVect(b[:36*(i+1)])
 		inventory = append(inventory, iv)
 	}
 	return &GetData{
@@ -51,8 +52,8 @@ func DecodeGetData(b []byte) (*GetData, error) {
 	}, nil
 }
 
-func (g *GetData) FilterInventoryWithType(typ uint32) []*InvVect {
-	inventory := []*InvVect{}
+func (g *GetData) FilterInventoryWithType(typ uint32) []*common.InvVect {
+	inventory := []*common.InvVect{}
 	for _, invvect := range g.Inventory {
 		if invvect.Type == typ {
 			inventory = append(inventory, invvect)

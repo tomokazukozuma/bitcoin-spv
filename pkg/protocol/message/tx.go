@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
-
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
 type Tx struct {
@@ -26,7 +26,7 @@ type Utxo struct {
 	TxOut *TxOut
 }
 
-func NewTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) *Tx {
+func NewTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) protocol.Message {
 	return &Tx{
 		Version:    version,
 		TxInCount:  common.NewVarInt(uint64(len(txin))),
