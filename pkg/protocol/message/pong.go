@@ -2,12 +2,19 @@ package message
 
 import (
 	"encoding/binary"
+
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 )
 
 type Pong struct {
 	Nonce uint64
 }
 
+func NewPong(nonce uint64) protocol.Message {
+	return &Pong{
+		Nonce: nonce,
+	}
+}
 func (p *Pong) Command() [12]byte {
 	var commandName [12]byte
 	copy(commandName[:], "pong")

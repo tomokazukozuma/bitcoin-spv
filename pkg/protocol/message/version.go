@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"time"
 
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
@@ -20,7 +21,7 @@ type Version struct {
 	Relay       bool
 }
 
-func NewVersion() *Version {
+func NewVersion() protocol.Message {
 	addrFrom := &common.NetworkAddress{
 		Services: uint64(1),
 		IP: [16]byte{
