@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
-
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
