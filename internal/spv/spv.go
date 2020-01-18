@@ -11,23 +11,19 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/wallet"
 )
 
 type SPV struct {
-	Client  *client.Client
-	Key     *util.Key
-	Address string
-	Balance uint64
+	Client *client.Client
+	Wallet *wallet.Wallet
 }
 
 func NewSPV(client *client.Client) *SPV {
-	key := util.NewKey()
-	key.GenerateKey()
+	wallet := wallet.NewWallet()
 	return &SPV{
-		Client:  client,
-		Key:     key,
-		Address: util.EncodeAddress(key.PublicKey.SerializeUncompressed()),
-		Balance: 0,
+		Client: client,
+		Wallet: wallet,
 	}
 }
 
@@ -157,12 +153,11 @@ func (s *SPV) MessageHandler() error {
 			tx, _ := message.DecodeTx(b)
 			log.Printf("tx: %+v", tx)
 			log.Printf("txhash: %+v", tx.ID())
-			pubkeyHash := util.Hash160(s.Key.PublicKey.SerializeUncompressed())
-			utxo := tx.GetUtxo(pubkeyHash)
+			utxo := tx.GetUtxo(s.Wallet.GetPublicKeyHash())
 			fee := util.CalculateFee(10, 1)
 			chargeValue := utxo[0].TxOut.Value - 1000 - fee
-			txout := createTxOut("2NCnDx5Zm6LgYerCjYe5TSQPeSdtsUdkmzn", s.Address, 1000, chargeValue)
-			txin, err := createTxIn(utxo, txout, s.Key)
+			txout := createTxOut("2NCnDx5Zm6LgYerCjYe5TSQPeSdtsUdkmzn", s.Wallet.GetAddress(), 1000, chargeValue)
+			txin, err := s.CreateTxIn(utxo, txout)
 			if err != nil {
 				log.Fatalf("createTxIn: %+v", err)
 			}
@@ -210,7 +205,7 @@ func (s *SPV) MessageHandler() error {
 	}
 }
 
-func createTxIn(utxos []*message.Utxo, txouts []*message.TxOut, key *util.Key) ([]*message.TxIn, error) {
+func (s *SPV) CreateTxIn(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
 	var txins []*message.TxIn
 	for _, utxo := range utxos {
 		txin := &message.TxIn{
@@ -234,14 +229,14 @@ func createTxIn(utxos []*message.Utxo, txouts []*message.TxOut, key *util.Key) (
 			[]byte{0x01, 0x00, 0x00, 0x00},
 		}, []byte{}))
 
-		signature, err := key.Sign(verified)
+		signature, err := s.Wallet.Sign(verified)
 		if err != nil {
 			return nil, err
 		}
 		log.Printf("signature len: %+v", len(signature))
 		hashType := []byte{0x01}
 		signatureWithType := bytes.Join([][]byte{signature, hashType}, []byte{})
-		txin.UnlockingScript = script.CreateUnlockingScriptForPKH(signatureWithType, key.PublicKey.SerializeUncompressed())
+		txin.UnlockingScript = script.CreateUnlockingScriptForPKH(signatureWithType, s.Wallet.GetPublicKey())
 		txins = append(txins, txin)
 	}
 	log.Printf("==== txins len: %+v", len(txins))
