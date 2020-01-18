@@ -15,7 +15,9 @@ type Key struct {
 }
 
 func NewKey() *Key {
-	return &Key{}
+	key := &Key{}
+	key.GenerateKey()
+	return key
 }
 
 func (k *Key) GenerateKey() error {

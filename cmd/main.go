@@ -26,10 +26,10 @@ func main() {
 	if err := spv.Handshake(); err != nil {
 		log.Fatal("handshake error: ", err)
 	}
-	log.Printf("address: %s", spv.Address)
+	log.Printf("address: %s", spv.Wallet.GetAddress())
 
 	// send filterload
-	publicKeyHash := util.Hash160(spv.Key.PublicKey.SerializeUncompressed())
+	publicKeyHash := spv.Wallet.GetPublicKeyHash()
 	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{publicKeyHash}))
 
 	// send getblocks
