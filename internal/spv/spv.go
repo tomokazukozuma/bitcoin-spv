@@ -153,6 +153,8 @@ func (s *SPV) MessageHandler() error {
 			tx, _ := message.DecodeTx(b)
 			log.Printf("tx: %+v", tx)
 			log.Printf("txhash: %+v", tx.ID())
+
+			// ここから送金処理
 			utxo := tx.GetUtxo(s.Wallet.GetPublicKeyHash())
 			fee := util.CalculateFee(10, 1)
 			chargeValue := utxo[0].TxOut.Value - 1000 - fee

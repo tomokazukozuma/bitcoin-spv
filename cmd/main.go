@@ -29,11 +29,10 @@ func main() {
 	log.Printf("address: %s", spv.Wallet.GetAddress())
 
 	// send filterload
-	publicKeyHash := spv.Wallet.GetPublicKeyHash()
-	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{publicKeyHash}))
+	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{spv.Wallet.GetPublicKeyHash()}))
 
 	// send getblocks
-	startBlockHash, err := hex.DecodeString("00000000000000183a8addcaaa69faa69b5c818589df645212a349680c1af053")
+	startBlockHash, err := hex.DecodeString("00000000000001099410b0fda249322aee099779b97461235fdbb6499ce96f07")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
