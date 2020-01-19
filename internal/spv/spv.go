@@ -77,6 +77,7 @@ func (s *SPV) MessageHandler() error {
 		//}
 		buf, err := s.Client.ReceiveMessage(common.MessageLen)
 		if err != nil {
+			log.Printf("ReceiveMessage: %+v", err)
 			return err
 		}
 		var header [24]byte
@@ -153,37 +154,11 @@ func (s *SPV) MessageHandler() error {
 			tx, _ := message.DecodeTx(b)
 			log.Printf("tx: %+v", tx)
 			log.Printf("txhash: %+v", tx.ID())
-
-			// ここから送金処理
-			utxo := tx.GetUtxo(s.Wallet.GetPublicKeyHash())
-			fee := util.CalculateFee(10, 1)
-			chargeValue := utxo[0].TxOut.Value - 1000 - fee
-			txout := createTxOut("2NCnDx5Zm6LgYerCjYe5TSQPeSdtsUdkmzn", s.Wallet.GetAddress(), 1000, chargeValue)
-			txin, err := s.CreateTxIn(utxo, txout)
-			if err != nil {
-				log.Fatalf("createTxIn: %+v", err)
+			utxos := tx.GetUtxo(s.Wallet.GetPublicKeyHash())
+			for _, utxo := range utxos {
+				s.Wallet.AddUtxo(utxo)
 			}
-
-			transaction = message.NewTx(uint32(1), txin, txout, uint32(0)).(*message.Tx)
-			inv := message.NewInv(
-				common.NewVarInt(uint64(1)),
-				[]*common.InvVect{common.NewInvVect(common.InvTypeMsgTx, transaction.ID())},
-			).(*message.Inv)
-
-			log.Printf("transaction: %+v", transaction)
-			log.Printf("transaction txin count: %+v", transaction.TxInCount.Data)
-			log.Printf("transaction txout count: %+v", transaction.TxOutCount.Data)
-			log.Printf("transaction.ID: %+v", transaction.ID())
-			log.Printf("transaction encode: %+v", hex.EncodeToString(transaction.Encode()))
-			log.Printf("inv count: %+v", inv.Count)
-			for _, iv := range inv.Inventory {
-				log.Printf("inv type: %+v", iv.Type)
-				log.Printf("inv hash: %+v", iv.Hash)
-			}
-			_, err = s.Client.SendMessage(inv)
-			if err != nil {
-				log.Fatalf("tx: send inv message error: %+v", err)
-			}
+			transaction = s.Send("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", s.Wallet.GetAddress(), 1000)
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
 			log.Printf("getdata: %+v", getData)
@@ -207,7 +182,7 @@ func (s *SPV) MessageHandler() error {
 	}
 }
 
-func (s *SPV) CreateTxIn(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
+func (s *SPV) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
 	var txins []*message.TxIn
 	for _, utxo := range utxos {
 		txin := &message.TxIn{
@@ -226,12 +201,12 @@ func (s *SPV) CreateTxIn(utxos []*message.Utxo, txouts []*message.TxOut) ([]*mes
 			uint32(0),
 		)
 
-		verified := util.Hash256(bytes.Join([][]byte{
+		sigHash := util.Hash256(bytes.Join([][]byte{
 			tx.Encode(),
 			[]byte{0x01, 0x00, 0x00, 0x00},
 		}, []byte{}))
 
-		signature, err := s.Wallet.Sign(verified)
+		signature, err := s.Wallet.Sign(sigHash)
 		if err != nil {
 			return nil, err
 		}
@@ -245,7 +220,7 @@ func (s *SPV) CreateTxIn(utxos []*message.Utxo, txouts []*message.TxOut) ([]*mes
 	return txins, nil
 }
 
-func createTxOut(toAddress string, chargeAddress string, value, chargeValue uint64) []*message.TxOut {
+func createTxOuts(toAddress string, chargeAddress string, value, chargeValue uint64) []*message.TxOut {
 	var txout []*message.TxOut
 	lockingScript1 := script.CreateLockingScriptForPKH(util.DecodeAddress(toAddress))
 	txout = append(txout, &message.TxOut{
@@ -259,4 +234,38 @@ func createTxOut(toAddress string, chargeAddress string, value, chargeValue uint
 		LockingScript: common.NewVarStr(lockingScript2),
 	})
 	return txout
+}
+
+func (s *SPV) Send(toAddress, changeAddress string, value uint64) *message.Tx {
+	// TODO valueに必要なutxoを取得するように修正
+	utxos := s.Wallet.Utxos
+	fee := util.CalculateFee(10, len(utxos))
+	chargeValue := s.Wallet.GetBalance() - value - fee
+	txouts := createTxOuts(toAddress, changeAddress, value, chargeValue)
+	txins, err := s.CreateTxIns(utxos, txouts)
+	if err != nil {
+		log.Fatalf("createTxIn: %+v", err)
+	}
+
+	transaction := message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
+	inv := message.NewInv(
+		common.NewVarInt(uint64(1)),
+		[]*common.InvVect{common.NewInvVect(common.InvTypeMsgTx, transaction.ID())},
+	).(*message.Inv)
+
+	log.Printf("transaction: %+v", transaction)
+	log.Printf("transaction txin count: %+v", transaction.TxInCount.Data)
+	log.Printf("transaction txout count: %+v", transaction.TxOutCount.Data)
+	log.Printf("transaction.ID: %+v", transaction.ID())
+	log.Printf("transaction encode: %+v", hex.EncodeToString(transaction.Encode()))
+	log.Printf("inv count: %+v", inv.Count)
+	for _, iv := range inv.Inventory {
+		log.Printf("inv type: %+v", iv.Type)
+		log.Printf("inv hash: %+v", iv.Hash)
+	}
+	_, err = s.Client.SendMessage(inv)
+	if err != nil {
+		log.Fatalf("tx: send inv message error: %+v", err)
+	}
+	return transaction
 }

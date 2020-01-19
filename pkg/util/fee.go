@@ -2,7 +2,7 @@ package util
 
 import "math"
 
-func CalculateFee(satoshiPerByte uint64, utxoCount uint64) uint64 {
+func CalculateFee(satoshiPerByte uint64, utxoCount int) uint64 {
 	// baseTransactionSize = 8(Version + LockTime) + inputcounter + (txid + n + scriptLength + scriptsig(signature(73,72,71) + pubkeyhash) + sequence)*utxoCount + outputcounter + output(8+1+23) *2
 	var baseTransactionSize = 8 + 1 + (4+4+1+95+4)*utxoCount + 1 + 32*2
 
