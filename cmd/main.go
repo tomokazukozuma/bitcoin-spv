@@ -14,8 +14,8 @@ import (
 func main() {
 
 	// connect tcp
-	c := client.NewClient("seed.tbtc.petertodd.org:18333")
-	//c := client.NewClient("[2604:a880:400:d0::4ac1:9001]:18333")
+	//c := client.NewClient("seed.tbtc.petertodd.org:18333")
+	c := client.NewClient("[2600:6c44:6380:1700:6917:d207:e9cd:ea14]:18333")
 	//c := client.NewClient("[2001:41d0:a:f7eb::1]:18333")
 	//[2604:a880:2:d0::2065:5001]:18333 <-取得できたノード
 	defer c.Conn.Close()
@@ -32,7 +32,7 @@ func main() {
 	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{spv.Wallet.GetPublicKeyHash()}))
 
 	// send getblocks
-	startBlockHash, err := hex.DecodeString("00000000000001099410b0fda249322aee099779b97461235fdbb6499ce96f07")
+	startBlockHash, err := hex.DecodeString("0000000000000010708ca3fad77d86d01d3e6bcd79e38a787f160bce23417c21")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
