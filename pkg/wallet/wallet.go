@@ -65,6 +65,7 @@ func (w *Wallet) CreateTx(toAddress string, value uint64) *message.Tx {
 	if err != nil {
 		log.Fatalf("createTxIn: %+v", err)
 	}
+	// TODO 使用したutxoを削除
 
 	return message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
 }
