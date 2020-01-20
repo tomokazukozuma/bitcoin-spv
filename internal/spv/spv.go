@@ -9,7 +9,6 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/script"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/wallet"
 )
@@ -158,7 +157,7 @@ func (s *SPV) MessageHandler() error {
 			for _, utxo := range utxos {
 				s.Wallet.AddUtxo(utxo)
 			}
-			transaction = s.Send("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", s.Wallet.GetAddress(), 1000)
+			transaction = s.SendTxInv("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", 1000)
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
 			log.Printf("getdata: %+v", getData)
@@ -182,72 +181,8 @@ func (s *SPV) MessageHandler() error {
 	}
 }
 
-func (s *SPV) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
-	var txins []*message.TxIn
-	for _, utxo := range utxos {
-		txin := &message.TxIn{
-			PreviousOutput: &message.OutPoint{
-				Hash: utxo.Hash,
-				N:    utxo.N,
-			},
-			UnlockingScript: utxo.TxOut.LockingScript,
-			Sequence:        0xFFFFFFFF,
-		}
-
-		tx := message.NewTx(
-			uint32(1),
-			[]*message.TxIn{txin},
-			txouts,
-			uint32(0),
-		)
-
-		sigHash := util.Hash256(bytes.Join([][]byte{
-			tx.Encode(),
-			[]byte{0x01, 0x00, 0x00, 0x00},
-		}, []byte{}))
-
-		signature, err := s.Wallet.Sign(sigHash)
-		if err != nil {
-			return nil, err
-		}
-		log.Printf("signature len: %+v", len(signature))
-		hashType := []byte{0x01}
-		signatureWithType := bytes.Join([][]byte{signature, hashType}, []byte{})
-		txin.UnlockingScript = script.CreateUnlockingScriptForPKH(signatureWithType, s.Wallet.GetPublicKey())
-		txins = append(txins, txin)
-	}
-	log.Printf("==== txins len: %+v", len(txins))
-	return txins, nil
-}
-
-func createTxOuts(toAddress string, chargeAddress string, value, chargeValue uint64) []*message.TxOut {
-	var txout []*message.TxOut
-	lockingScript1 := script.CreateLockingScriptForPKH(util.DecodeAddress(toAddress))
-	txout = append(txout, &message.TxOut{
-		Value:         value,
-		LockingScript: common.NewVarStr(lockingScript1),
-	})
-
-	lockingScript2 := script.CreateLockingScriptForPKH(util.DecodeAddress(chargeAddress))
-	txout = append(txout, &message.TxOut{
-		Value:         chargeValue,
-		LockingScript: common.NewVarStr(lockingScript2),
-	})
-	return txout
-}
-
-func (s *SPV) Send(toAddress, changeAddress string, value uint64) *message.Tx {
-	// TODO valueに必要なutxoを取得するように修正
-	utxos := s.Wallet.Utxos
-	fee := util.CalculateFee(10, len(utxos))
-	chargeValue := s.Wallet.GetBalance() - value - fee
-	txouts := createTxOuts(toAddress, changeAddress, value, chargeValue)
-	txins, err := s.CreateTxIns(utxos, txouts)
-	if err != nil {
-		log.Fatalf("createTxIn: %+v", err)
-	}
-
-	transaction := message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
+func (s *SPV) SendTxInv(toAddress string, value uint64) *message.Tx {
+	transaction := s.Wallet.CreateTx(toAddress, value)
 	inv := message.NewInv(
 		common.NewVarInt(uint64(1)),
 		[]*common.InvVect{common.NewInvVect(common.InvTypeMsgTx, transaction.ID())},
@@ -259,11 +194,8 @@ func (s *SPV) Send(toAddress, changeAddress string, value uint64) *message.Tx {
 	log.Printf("transaction.ID: %+v", transaction.ID())
 	log.Printf("transaction encode: %+v", hex.EncodeToString(transaction.Encode()))
 	log.Printf("inv count: %+v", inv.Count)
-	for _, iv := range inv.Inventory {
-		log.Printf("inv type: %+v", iv.Type)
-		log.Printf("inv hash: %+v", iv.Hash)
-	}
-	_, err = s.Client.SendMessage(inv)
+
+	_, err := s.Client.SendMessage(inv)
 	if err != nil {
 		log.Fatalf("tx: send inv message error: %+v", err)
 	}

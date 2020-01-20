@@ -32,7 +32,7 @@ func main() {
 	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{spv.Wallet.GetPublicKeyHash()}))
 
 	// send getblocks
-	startBlockHash, err := hex.DecodeString("000000000000016dd3aabb4376bb0aadcbfbc4bb79a92d73cce6837471bbf764")
+	startBlockHash, err := hex.DecodeString("0000000000000010708ca3fad77d86d01d3e6bcd79e38a787f160bce23417c21")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
