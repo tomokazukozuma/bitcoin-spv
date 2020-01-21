@@ -23,8 +23,8 @@ type Message struct {
 
 func NewMessage(command [12]byte, payload []byte) *Message {
 	var checksum [4]byte
-	hashedMsg := util.Hash256(payload)
-	copy(checksum[:], hashedMsg[0:4])
+	hashedPayload := util.Hash256(payload)
+	copy(checksum[:], hashedPayload[0:4])
 	return &Message{
 		Magic:    MagicTestnet3,
 		Command:  command,
