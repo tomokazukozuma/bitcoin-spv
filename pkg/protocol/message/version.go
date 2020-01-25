@@ -38,9 +38,10 @@ func NewVersion() protocol.Message {
 		Nonce:       uint64(0),
 		UserAgent:   common.NewVarStr([]byte("")),
 		StartHeight: uint32(0),
-		Relay:       false,
+		Relay:       false, // falseの場合、ブロードキャストするトランザクションは フィルタコマンド（load,add,clear）を受信するまでアナウンスされない
 	}
 }
+
 func (v *Version) Command() [12]byte {
 	var commandName [12]byte
 	copy(commandName[:], "version")

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/client"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/network"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
@@ -14,11 +14,11 @@ import (
 )
 
 type SPV struct {
-	Client *client.Client
+	Client *network.Client
 	Wallet *wallet.Wallet
 }
 
-func NewSPV(client *client.Client) *SPV {
+func NewSPV(client *network.Client) *SPV {
 	wallet := wallet.NewWallet()
 	return &SPV{
 		Client: client,
