@@ -65,8 +65,23 @@ func (s *SPV) Handshake() error {
 	}
 }
 
-func (s *SPV) RegsterFilterLoad() error {
+func (s *SPV) SendFilterLoad() error {
 	_, err := s.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{s.Wallet.GetPublicKeyHash()}))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SPV) SendGetBlocks(startBlock string) error {
+	startBlockHash, err := hex.DecodeString(startBlock)
+	if err != nil {
+		return err
+	}
+	var reversedStartBlockHash [32]byte
+	copy(reversedStartBlockHash[:], util.ReverseBytes(startBlockHash))
+	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHash}, message.ZeroHash)
+	_, err = s.Client.SendMessage(getblocks)
 	if err != nil {
 		return err
 	}

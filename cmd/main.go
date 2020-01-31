@@ -1,14 +1,10 @@
 package main
 
 import (
-	"encoding/hex"
-	"fmt"
 	"log"
 
 	"github.com/tomokazukozuma/bitcoin-spv/internal/spv"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/network"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 func main() {
@@ -29,29 +25,17 @@ func main() {
 	log.Printf("address: %s", spv.Wallet.GetAddress())
 
 	// register filterload
-	if err := spv.RegsterFilterLoad(); err != nil {
+	if err := spv.SendFilterLoad(); err != nil {
 		log.Fatal("filterload error: ", err)
 	}
 
 	// send getblocks
-	startBlockHash, err := hex.DecodeString("0000000000000010708ca3fad77d86d01d3e6bcd79e38a787f160bce23417c21")
-	if err != nil {
-		fmt.Println(err.Error())
+	if err := spv.SendGetBlocks("0000000000000010708ca3fad77d86d01d3e6bcd79e38a787f160bce23417c21"); err != nil {
+		log.Fatal("GetBlocks error: ", err)
 	}
-	//endBlockHash, err := hex.DecodeString("00000000000001920452f880f211635922a692c3ac23cdd79c961d5c7128541d")
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
-	var reversedStartBlockHash [32]byte
-	//var reversedEndBlockHash [32]byte
-	copy(reversedStartBlockHash[:], util.ReverseBytes(startBlockHash))
-	//copy(reversedEndBlockHash[:], util.ReverseBytes(endBlockHash))
-	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHash}, message.ZeroHash)
-	spv.Client.SendMessage(getblocks)
-
 	// receiving message
 	if err := spv.MessageHandler(); err != nil {
-		log.Printf("main: message handler err:", err)
+		log.Fatal("main: message handler err:", err)
 	}
 
 	log.Printf("finish")
