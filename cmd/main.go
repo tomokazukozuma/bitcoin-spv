@@ -28,8 +28,10 @@ func main() {
 	}
 	log.Printf("address: %s", spv.Wallet.GetAddress())
 
-	// send filterload
-	spv.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{spv.Wallet.GetPublicKeyHash()}))
+	// register filterload
+	if err := spv.RegsterFilterLoad(); err != nil {
+		log.Fatal("filterload error: ", err)
+	}
 
 	// send getblocks
 	startBlockHash, err := hex.DecodeString("0000000000000010708ca3fad77d86d01d3e6bcd79e38a787f160bce23417c21")

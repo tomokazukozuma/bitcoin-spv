@@ -65,6 +65,14 @@ func (s *SPV) Handshake() error {
 	}
 }
 
+func (s *SPV) RegsterFilterLoad() error {
+	_, err := s.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{s.Wallet.GetPublicKeyHash()}))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SPV) MessageHandler() error {
 	blockSize := 0
 	needBlockSize := 1
