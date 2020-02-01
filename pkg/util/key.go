@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"io/ioutil"
+	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
 )
@@ -22,20 +23,20 @@ func NewKey() *Key {
 
 func (k *Key) GenerateKey() error {
 	if existsFile(keypath) {
-		randomBytes, err := ioutil.ReadFile(keypath)
+		privKeyBytes, err := ioutil.ReadFile(keypath)
 		if err != nil {
 			return err
 		}
-		privateKey, publicKey := btcec.PrivKeyFromBytes(btcec.S256(), randomBytes)
+		privateKey, publicKey := btcec.PrivKeyFromBytes(btcec.S256(), privKeyBytes)
 		k.PrivateKey = privateKey
 		k.PublicKey = publicKey
 	} else {
-		randomBytes, err := generateRandom()
+		privKey, err := generatePrivKey()
 		if err != nil {
 			return err
 		}
-		writeFile(keypath, randomBytes)
-		privateKey, publicKey := btcec.PrivKeyFromBytes(btcec.S256(), randomBytes)
+		writeFile(keypath, privKey.Bytes())
+		privateKey, publicKey := btcec.PrivKeyFromBytes(btcec.S256(), privKey.Bytes())
 		k.PrivateKey = privateKey
 		k.PublicKey = publicKey
 	}
@@ -50,10 +51,17 @@ func (k *Key) Sign(message []byte) ([]byte, error) {
 	return signature.Serialize(), nil
 }
 
-func generateRandom() ([]byte, error) {
+func generatePrivKey() (*big.Int, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return nil, err
 	}
-	return b, nil
+	privKey := new(big.Int).SetBytes(b)
+	var one = new(big.Int).SetInt64(1)
+
+	// 1 < privkey < (n-1) の範囲になるように調整
+	n := new(big.Int).Sub(btcec.S256().N, one)
+	privKey.Mod(privKey, n)
+	privKey.Add(privKey, one)
+	return privKey, nil
 }
