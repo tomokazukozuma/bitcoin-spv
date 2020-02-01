@@ -24,7 +24,7 @@ func main() {
 	}
 	log.Printf("address: %s", spv.Wallet.GetAddress())
 
-	// register filterload
+	// send filterload
 	if err := spv.SendFilterLoad(); err != nil {
 		log.Fatal("filterload error: ", err)
 	}
