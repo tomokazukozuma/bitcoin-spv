@@ -12,8 +12,8 @@ type Client struct {
 	Conn net.Conn
 }
 
-func NewClient(ip string) *Client {
-	conn, err := net.Dial("tcp", ip)
+func NewClient(address string) *Client {
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		log.Fatal(err)
 	}

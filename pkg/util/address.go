@@ -10,10 +10,9 @@ import (
 
 func EncodeAddress(publicKeyBytes []byte) string {
 	bs := bytes.Join([][]byte{
-		[]byte{0x6F}, // This means that, this address is for testnet.
+		[]byte{0x6F},
 		Hash160(publicKeyBytes),
-	},
-		[]byte{})
+	}, []byte{})
 
 	checksum := Hash256(bs)[:4]
 	return base58.Encode(bytes.Join([][]byte{bs, checksum}, []byte{}))

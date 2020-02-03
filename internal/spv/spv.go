@@ -33,9 +33,9 @@ func (s *SPV) Handshake() error {
 		return err
 	}
 
-	var recvVerack, recvVersion bool
+	var recvVerack, sendVerack bool
 	for {
-		if recvVerack && recvVersion {
+		if recvVerack && sendVerack {
 			log.Printf("success handshake")
 			return nil
 		}
@@ -56,11 +56,11 @@ func (s *SPV) Handshake() error {
 		if bytes.HasPrefix(msg.Command[:], []byte("verack")) {
 			recvVerack = true
 		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
-			recvVersion = true
 			_, err := s.Client.SendMessage(message.NewVerack())
 			if err != nil {
 				return err
 			}
+			sendVerack = true
 		}
 	}
 }
