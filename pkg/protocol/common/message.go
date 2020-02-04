@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	MagicTestnet3 = uint32(118034699)
-	MessageLen    = 24
+	MagicTestnet3       = uint32(118034699)
+	MessageHeaderLength = 24
 )
 
 type Message struct {
@@ -51,14 +51,14 @@ func (m *Message) Encode() []byte {
 	)
 }
 
-func DecodeMessageHeader(b [MessageLen]byte) *Message {
+func DecodeMessageHeader(b [MessageHeaderLength]byte) *Message {
 	var (
 		command  [12]byte
 		checksum [4]byte
 	)
 
 	copy(command[:], b[4:16])
-	copy(checksum[:], b[20:MessageLen])
+	copy(checksum[:], b[20:MessageHeaderLength])
 
 	log.Printf("receive : %s", string(command[:]))
 

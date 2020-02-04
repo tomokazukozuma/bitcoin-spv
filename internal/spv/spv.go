@@ -73,14 +73,14 @@ func (s *SPV) SendFilterLoad() error {
 	return nil
 }
 
-func (s *SPV) SendGetBlocks(startBlock string) error {
-	startBlockHash, err := hex.DecodeString(startBlock)
+func (s *SPV) SendGetBlocks(startBlockHeaderHash string) error {
+	startBlockHash, err := hex.DecodeString(startBlockHeaderHash)
 	if err != nil {
 		return err
 	}
-	var reversedStartBlockHash [32]byte
-	copy(reversedStartBlockHash[:], util.ReverseBytes(startBlockHash))
-	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHash}, message.ZeroHash)
+	var reversedStartBlockHeaderHash [32]byte
+	copy(reversedStartBlockHeaderHash[:], util.ReverseBytes(startBlockHash))
+	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHeaderHash}, message.ZeroHash)
 	_, err = s.Client.SendMessage(getblocks)
 	if err != nil {
 		return err
