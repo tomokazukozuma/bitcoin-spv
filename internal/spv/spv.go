@@ -39,7 +39,7 @@ func (s *SPV) Handshake() error {
 			log.Printf("success handshake")
 			return nil
 		}
-		buf, err := s.Client.ReceiveMessage(common.MessageLen)
+		buf, err := s.Client.ReceiveMessage(common.MessageHeaderLength)
 		if err != nil {
 			log.Printf("handshake Receive message error: %+v", err)
 			return err
@@ -97,7 +97,7 @@ func (s *SPV) MessageHandler() error {
 		//	log.Printf("====== complete ======")
 		//	return nil
 		//}
-		buf, err := s.Client.ReceiveMessage(common.MessageLen)
+		buf, err := s.Client.ReceiveMessage(common.MessageHeaderLength)
 		if err != nil {
 			log.Printf("ReceiveMessage: %+v", err)
 			return err

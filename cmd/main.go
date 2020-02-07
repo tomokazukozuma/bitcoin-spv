@@ -10,8 +10,8 @@ import (
 func main() {
 
 	// connect tcp
-	//c := client.NewClient("seed.tbtc.petertodd.org:18333")
-	c := network.NewClient("[2600:6c44:6380:1700:6917:d207:e9cd:ea14]:18333")
+	c := network.NewClient("seed.tbtc.petertodd.org:18333")
+	//c := network.NewClient("[2600:6c44:6380:1700:6917:d207:e9cd:ea14]:18333")
 	//c := client.NewClient("[2001:41d0:a:f7eb::1]:18333")
 	//[2604:a880:2:d0::2065:5001]:18333 <-取得できたノード
 	defer c.Conn.Close()
