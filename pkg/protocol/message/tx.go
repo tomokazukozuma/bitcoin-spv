@@ -128,6 +128,7 @@ func DecodeTx(b []byte) (*Tx, error) {
 func (tx *Tx) GetUtxo(pubkeyHash []byte) []*Utxo {
 	var utxo []*Utxo
 	for index, txout := range tx.TxOut {
+		// TODO locking scriptの種類をみて、データ部だけのチェックにする
 		if bytes.HasPrefix(txout.LockingScript.Data, script.CreateLockingScriptForPKH(pubkeyHash)) {
 			utxo = append(utxo, &Utxo{
 				Hash:  tx.ID(),
