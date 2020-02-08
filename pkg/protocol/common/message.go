@@ -74,7 +74,7 @@ func IsValidChecksum(checksum [4]byte, payload []byte) bool {
 	hashedPayload := util.Hash256(payload)
 	var payloadChecksum [4]byte
 	copy(payloadChecksum[:], hashedPayload[0:4])
-	return checksum == payloadChecksum
+	return 0 == bytes.Compare(checksum[:], payloadChecksum[:])
 }
 
 func IsTestnet3(magic uint32) bool {
