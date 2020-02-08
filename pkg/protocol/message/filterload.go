@@ -3,6 +3,7 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
+	"math/rand"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
@@ -18,7 +19,7 @@ type Filterload struct {
 }
 
 func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) protocol.Message {
-	nTweak := util.GenerateNTweak()
+	nTweak := rand.Uint32()
 	return &Filterload{
 		Length:     common.NewVarInt(uint64(size)),
 		Filter:     util.CreateBloomFilter(size, nHashFuncs, queries, nTweak),
@@ -46,6 +47,6 @@ func (f *Filterload) Encode() []byte {
 		f.Filter,
 		nHashFuncsByte,
 		nTweakByte,
-		[]byte{f.NFlags},
+		{f.NFlags},
 	}, []byte{})
 }
