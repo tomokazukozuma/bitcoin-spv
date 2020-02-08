@@ -3,9 +3,7 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
-	"math"
 
-	"github.com/spaolacci/murmur3"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
@@ -20,29 +18,12 @@ type Filterload struct {
 }
 
 func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) protocol.Message {
-	byteArray := make([]byte, size)
-	nTweak := make([]byte, 4)
-	for i := 0; i < cap(nTweak); i++ {
-		nTweak[i] = util.RandInt8(0, math.MaxUint8) // 0 - 255
-	}
-	nTweakUint32 := binary.BigEndian.Uint32(nTweak)
-	for _, query := range queries {
-		for i := 0; uint32(i) < nHashFuncs; i++ {
-			// 0xFBA4C795 comes from here
-			// https://github.com/bitcoin/bitcoin/blob/5961b23898ee7c0af2626c46d5d70e80136578d3/src/bloom.cpp#L52-L56
-			seed := uint32(i)*0xFBA4C795 + nTweakUint32
-			hashValue := murmur3.Sum32WithSeed(query, seed)
-			adjustHashValue := hashValue % (size * uint32(8))
-			idx := adjustHashValue >> 3
-			value := 1 << (uint32(7) & hashValue)
-			byteArray[idx] = byte(value)
-		}
-	}
+	nTweak := util.GenerateNTweak()
 	return &Filterload{
 		Length:     common.NewVarInt(uint64(size)),
-		Filter:     byteArray,
+		Filter:     util.CreateBloomFilter(size, nHashFuncs, queries, nTweak),
 		NHashFuncs: nHashFuncs,
-		NTweak:     nTweakUint32,
+		NTweak:     nTweak,
 		NFlags:     uint8(1),
 	}
 }

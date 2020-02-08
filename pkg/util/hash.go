@@ -3,8 +3,6 @@ package util
 import (
 	"crypto/sha256"
 	"io"
-	"math/rand"
-	"time"
 
 	"golang.org/x/crypto/ripemd160"
 )
@@ -20,11 +18,6 @@ func Hash160(b []byte) []byte {
 	rip := ripemd160.New()
 	io.WriteString(rip, string(sum[:]))
 	return rip.Sum(nil)
-}
-
-func RandInt8(min int, max int) uint8 {
-	rand.Seed(time.Now().UTC().UnixNano())
-	return uint8(min + rand.Intn(max-min))
 }
 
 func ReverseBytes(b []byte) []byte {
