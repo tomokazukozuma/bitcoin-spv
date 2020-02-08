@@ -113,7 +113,7 @@ func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
 func (m *MerkleBlock) FlagBits() []bool {
 	res := []bool{}
 	for _, flagByte := range m.Flags {
-		byteInt := uint8(flagByte)
+		byteInt := flagByte
 		for i := 0; i < 8; i++ {
 			if (byteInt/uint8(math.Exp2(float64(i))))%uint8(2) == 0x01 {
 				res = append(res, true)
@@ -178,32 +178,4 @@ func calcHash(hashes *[][32]byte, flags *[]bool, height int, pos int, totalTrans
 func calcTreeWidth(height uint, totalTransactions int) int {
 	// refer: https://github.com/bitcoin/bitcoin/blob/5961b23898ee7c0af2626c46d5d70e80136578d3/src/merkleblock.h#L65-L68
 	return (totalTransactions + (1 << height) - 1) >> height
-}
-
-type Merkleblocks struct {
-	blocks []*MerkleBlock
-}
-
-func NewMerkleBlocks() *Merkleblocks {
-	return &Merkleblocks{
-		[]*MerkleBlock{},
-	}
-}
-
-func (m *Merkleblocks) Add(b *MerkleBlock) {
-	m.blocks = append(m.blocks, b)
-}
-
-func (m *Merkleblocks) Size() int {
-	return len(m.blocks)
-}
-
-func (m *Merkleblocks) LatestBlock() *MerkleBlock {
-	var latest *MerkleBlock
-	for _, block := range m.blocks {
-		if latest == nil || block.Timestamp < latest.Timestamp {
-			latest = block
-		}
-	}
-	return latest
 }

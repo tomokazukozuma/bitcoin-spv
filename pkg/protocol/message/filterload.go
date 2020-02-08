@@ -23,7 +23,7 @@ func NewFilterload(size uint32, nHashFuncs uint32, queries [][]byte) protocol.Me
 	byteArray := make([]byte, size)
 	nTweak := make([]byte, 4)
 	for i := 0; i < cap(nTweak); i++ {
-		nTweak[i] = util.RandInt8(0, math.MaxUint8)
+		nTweak[i] = util.RandInt8(0, math.MaxUint8) // 0 - 255
 	}
 	nTweakUint32 := binary.BigEndian.Uint32(nTweak)
 	for _, query := range queries {
