@@ -21,7 +21,7 @@ func CreateBloomFilter(byteSize uint32, nHashFuncs uint32, queries [][]byte, nTw
 	byteArray := make([]byte, byteSize)
 	for _, query := range queries {
 		for i := 0; uint32(i) < nHashFuncs; i++ {
-			seed := uint32(i)*0xFBA4C795 + nTweak
+			seed := generateSeed(i, nTweak)
 			hashValue := murmur3.Sum32WithSeed(query, seed)
 			adjustHashValue := hashValue % (byteSize * uint32(8))
 			idx := adjustHashValue >> 3
@@ -32,6 +32,9 @@ func CreateBloomFilter(byteSize uint32, nHashFuncs uint32, queries [][]byte, nTw
 	return byteArray
 }
 
+func generateSeed(i int, nTweak uint32) uint32 {
+	return (uint32(i)*0xFBA4C795 + nTweak) & 0xffffffff
+}
 func randInt8(min int, max int) uint8 {
 	rand.Seed(time.Now().UTC().UnixNano())
 	return uint8(min + rand.Intn(max-min))
