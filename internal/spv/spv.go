@@ -184,7 +184,7 @@ func (s *SPV) MessageHandler() error {
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
 			log.Printf("getdata: %+v", getData)
-			invs := getData.FilterInventoryWithType(common.InvTypeMsgTx)
+			invs := getData.FilterInventoryByType(common.InvTypeMsgTx)
 			for _, invvect := range invs {
 				txID := transaction.ID()
 				if bytes.Equal(invvect.Hash[:], txID[:]) {

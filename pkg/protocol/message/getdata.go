@@ -52,7 +52,7 @@ func DecodeGetData(b []byte) (*GetData, error) {
 	}, nil
 }
 
-func (g *GetData) FilterInventoryWithType(typ uint32) []*common.InvVect {
+func (g *GetData) FilterInventoryByType(typ uint32) []*common.InvVect {
 	inventory := []*common.InvVect{}
 	for _, invvect := range g.Inventory {
 		if invvect.Type == typ {
