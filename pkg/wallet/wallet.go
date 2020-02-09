@@ -41,6 +41,7 @@ func (w *Wallet) AddUtxo(utxo *message.Utxo) {
 			alreadyExists = true
 		}
 	}
+	// TODO TxInで使われいないかチェック
 	if alreadyExists {
 		return
 	}
