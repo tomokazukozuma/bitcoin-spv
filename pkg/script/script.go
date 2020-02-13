@@ -8,30 +8,18 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
-const (
-	OpDup = 0x76
-
-	OpEqual = 0x87
-
-	OpEqualVerify = 0x88
-
-	OpHash160 = 0xa9
-
-	OpCheckSig = 0xac
-)
-
 func OpPushData(data []byte) []byte {
 	len := len(data)
 	if len <= 75 {
 		return bytes.Join([][]byte{
-			[]byte{byte(len)},
+			{byte(len)},
 			data,
 		}, []byte{})
 	}
 	if len <= math.MaxUint8 {
 		return bytes.Join([][]byte{
-			[]byte{0x4c},
-			[]byte{byte(len)},
+			{OpPushData1},
+			{byte(len)},
 			data,
 		}, []byte{})
 	}
@@ -39,7 +27,7 @@ func OpPushData(data []byte) []byte {
 		b := make([]byte, 2)
 		binary.BigEndian.PutUint16(b, uint16(len))
 		return bytes.Join([][]byte{
-			[]byte{0x4d},
+			{OpPushData2},
 			b,
 			data,
 		}, []byte{})
@@ -48,7 +36,7 @@ func OpPushData(data []byte) []byte {
 		b := make([]byte, 4)
 		binary.BigEndian.PutUint32(b, uint32(len))
 		return bytes.Join([][]byte{
-			[]byte{0x4e},
+			{OpPushData4},
 			b,
 			data,
 		}, []byte{})
@@ -58,11 +46,11 @@ func OpPushData(data []byte) []byte {
 
 func CreateLockingScriptForPKH(pubkeyHash []byte) []byte {
 	return bytes.Join([][]byte{
-		[]byte{OpDup},
-		[]byte{OpHash160},
+		{OpDup},
+		{OpHash160},
 		common.NewVarStr(pubkeyHash).Encode(),
-		[]byte{OpEqualVerify},
-		[]byte{OpCheckSig},
+		{OpEqualVerify},
+		{OpCheckSig},
 	}, []byte{})
 }
 
