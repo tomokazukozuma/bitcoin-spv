@@ -20,7 +20,7 @@ func main() {
 
 	// handshake
 	spv := spv.NewSPV(c)
-	if err := spv.Handshake(); err != nil {
+	if err := spv.Handshake(0); err != nil {
 		log.Fatal("handshake error: ", err)
 	}
 	log.Printf("address: %s", spv.Wallet.GetAddress())

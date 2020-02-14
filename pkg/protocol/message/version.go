@@ -21,7 +21,7 @@ type Version struct {
 	Relay       bool
 }
 
-func NewVersion() protocol.Message {
+func NewVersion(startHeight uint32) protocol.Message {
 	addrFrom := &common.NetworkAddress{
 		Services: uint64(1),
 		IP: [16]byte{
@@ -37,7 +37,7 @@ func NewVersion() protocol.Message {
 		AddrFrom:    addrFrom,
 		Nonce:       uint64(0),
 		UserAgent:   common.NewVarStr([]byte("")),
-		StartHeight: uint32(0),
+		StartHeight: startHeight,
 		Relay:       false, // falseの場合、ブロードキャストするトランザクションは フィルタコマンド（load,add,clear）を受信するまでアナウンスされない
 	}
 }

@@ -26,8 +26,8 @@ func NewSPV(client *network.Client) *SPV {
 	}
 }
 
-func (s *SPV) Handshake() error {
-	v := message.NewVersion()
+func (s *SPV) Handshake(startHeight uint32) error {
+	v := message.NewVersion(startHeight)
 	_, err := s.Client.SendMessage(v)
 	if err != nil {
 		return err
@@ -61,6 +61,8 @@ func (s *SPV) Handshake() error {
 				return err
 			}
 			sendVerack = true
+		} else {
+			log.Printf("receive : other")
 		}
 	}
 }
