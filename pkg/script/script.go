@@ -8,7 +8,7 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 )
 
-func OpPushData(data []byte) []byte {
+func PushData(data []byte) []byte {
 	len := len(data)
 	if len <= 75 {
 		return bytes.Join([][]byte{
@@ -18,7 +18,7 @@ func OpPushData(data []byte) []byte {
 	}
 	if len <= math.MaxUint8 {
 		return bytes.Join([][]byte{
-			{OpPushData1},
+			{OP_PUSHDATA1},
 			{byte(len)},
 			data,
 		}, []byte{})
@@ -27,7 +27,7 @@ func OpPushData(data []byte) []byte {
 		b := make([]byte, 2)
 		binary.BigEndian.PutUint16(b, uint16(len))
 		return bytes.Join([][]byte{
-			{OpPushData2},
+			{OP_PUSHDATA2},
 			b,
 			data,
 		}, []byte{})
@@ -36,7 +36,7 @@ func OpPushData(data []byte) []byte {
 		b := make([]byte, 4)
 		binary.BigEndian.PutUint32(b, uint32(len))
 		return bytes.Join([][]byte{
-			{OpPushData4},
+			{OP_PUSHDATA4},
 			b,
 			data,
 		}, []byte{})
@@ -46,17 +46,17 @@ func OpPushData(data []byte) []byte {
 
 func CreateLockingScriptForPKH(pubkeyHash []byte) []byte {
 	return bytes.Join([][]byte{
-		{OpDup},
-		{OpHash160},
+		{OP_DUP},
+		{OP_HASH160},
 		common.NewVarStr(pubkeyHash).Encode(),
-		{OpEqualVerify},
-		{OpCheckSig},
+		{OP_EQUALVERIFY},
+		{OP_CHECKSIG},
 	}, []byte{})
 }
 
 func CreateUnlockingScriptForPKH(signature, publickey []byte) *common.VarStr {
 	return common.NewVarStr(bytes.Join([][]byte{
-		OpPushData(signature),
-		OpPushData(publickey),
+		PushData(signature),
+		PushData(publickey),
 	}, []byte{}))
 }
