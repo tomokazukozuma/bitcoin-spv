@@ -10,7 +10,7 @@ import (
 
 func EncodeAddress(publicKeyBytes []byte) string {
 	bs := bytes.Join([][]byte{
-		[]byte{0x6F},
+		{0x6F},
 		Hash160(publicKeyBytes),
 	}, []byte{})
 
