@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"math"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
@@ -31,8 +30,6 @@ func (g *MerkleBlock) Command() [12]byte {
 	return commandName
 }
 
-// BlockHash return hash of this merkleblock.
-// hash256 of version to nonce.
 func (m *MerkleBlock) GetBlockHash() string {
 	var res [32]byte
 	versionByte := make([]byte, 4)
@@ -59,9 +56,6 @@ func (m *MerkleBlock) GetBlockHash() string {
 }
 
 func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
-	if len(b) < 84 {
-		return nil, fmt.Errorf("Decode merkle block failed, invalid input: %v", b)
-	}
 	version := binary.LittleEndian.Uint32(b[0:4])
 	var prevBlockArr [32]byte
 	var merkleRootArr [32]byte
@@ -109,66 +103,56 @@ func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
 	}, nil
 }
 
-// FlagBits return flags of the merkleblock.
-func (m *MerkleBlock) FlagBits() []bool {
-	res := []bool{}
-	for _, flagByte := range m.Flags {
-		byteInt := flagByte
-		for i := 0; i < 8; i++ {
-			if (byteInt/uint8(math.Exp2(float64(i))))%uint8(2) == 0x01 {
-				res = append(res, true)
-			} else {
-				res = append(res, false)
-			}
-		}
-	}
-	return res
-}
-
 func (m *MerkleBlock) Validate() [][32]byte {
 	hashes := m.Hashes
-	flags := m.FlagBits()
+	flags := m.decodeFlagBits()
 	height := int(math.Ceil(math.Log2(float64(m.TotalTransactions))))
-	// マークルパスからrootを計算して m.merkleRoot と一致するか計算
 
-	matchedTxs := [][32]byte{}
-	rootHash := calcHash(&hashes, &flags, height, 0, int(m.TotalTransactions), &matchedTxs)
+	var matchedTxs [][32]byte
+	rootHash := calcHash(flags, height, 0, int(m.TotalTransactions), hashes, matchedTxs)
 	if bytes.Equal(rootHash[:], m.MerkleRoot[:]) {
 		return matchedTxs
 	}
 	return [][32]byte{}
 }
 
-// https://bitcoin.org/en/developer-reference#merkleblock
-func calcHash(hashes *[][32]byte, flags *[]bool, height int, pos int, totalTransactions int, matchedTxs *[][32]byte) [32]byte {
-	if !(*flags)[0] {
-		// フラグが0のとき
-		// 先頭のハッシュをこのノードのtxId/ハッシュとする、これより下のノードは探索しない
-		*flags = (*flags)[1:]
-		h := (*hashes)[0]
-		*hashes = (*hashes)[1:]
+func (m *MerkleBlock) decodeFlagBits() (flags []bool) {
+	for _, flagByte := range m.Flags {
+		byteInt := flagByte
+		for i := 0; i < 8; i++ {
+			if (byteInt/uint8(math.Exp2(float64(i))))%uint8(2) == 0x01 {
+				flags = append(flags, true)
+			} else {
+				flags = append(flags, false)
+			}
+		}
+	}
+	return
+}
+
+func calcHash(flags []bool, height, pos, totalTransactions int, hashes, matchedTxs [][32]byte) [32]byte {
+	if !flags[0] {
+		flags = flags[1:]
+		h := (hashes)[0]
+		hashes = hashes[1:]
 		return h
 	}
 	if height == 0 {
-		// フラグが1で高さ0(葉ノード)の場合
-		// 先頭のハッシュをこのノードのtxIdとして、このトランザクションはマッチ
-		*flags = (*flags)[1:]
-		h := (*hashes)[0]
-		*hashes = (*hashes)[1:]
-		*matchedTxs = append(*matchedTxs, h)
+		flags = flags[1:]
+		h := hashes[0]
+		hashes = hashes[1:]
+		matchedTxs = append(matchedTxs, h)
 		return h
 	}
-	// calculate left hash
-	*flags = (*flags)[1:]
-	left := calcHash(hashes, flags, height-1, pos*2, totalTransactions, matchedTxs)
-	// calculate right hash if not beyond the end of the array - copy left hash otherwise
+
+	flags = flags[1:]
+	left := calcHash(flags, height-1, pos*2, totalTransactions, hashes, matchedTxs)
 	var right [32]byte
 	if pos*2+1 < calcTreeWidth(uint(height-1), totalTransactions) {
-		right = calcHash(hashes, flags, height-1, pos*2+1, totalTransactions, matchedTxs)
+		right = calcHash(flags, height-1, pos*2+1, totalTransactions, hashes, matchedTxs)
 	} else {
 		copy(right[:], left[:])
 	}
-	// combine subhashes
 	hash := util.Hash256(bytes.Join([][]byte{left[:], right[:]}, []byte{}))
 	var res [32]byte
 	copy(res[:], hash)
@@ -176,6 +160,5 @@ func calcHash(hashes *[][32]byte, flags *[]bool, height int, pos int, totalTrans
 }
 
 func calcTreeWidth(height uint, totalTransactions int) int {
-	// refer: https://github.com/bitcoin/bitcoin/blob/5961b23898ee7c0af2626c46d5d70e80136578d3/src/merkleblock.h#L65-L68
 	return (totalTransactions + (1 << height) - 1) >> height
 }

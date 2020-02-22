@@ -58,9 +58,10 @@ func (w *Wallet) GetBalance() uint64 {
 }
 
 func (w *Wallet) CreateTx(toAddress string, value uint64) *message.Tx {
-	utxos := w.getEnoughUtxos(value)
+	utxos, totalValue := w.getEnoughUtxos(value)
 	fee := util.CalculateFee(10, len(utxos))
-	txouts := w.CreateTxOuts(toAddress, value, fee)
+	chargeValue := totalValue - value - fee
+	txouts := w.CreateTxOuts(toAddress, value, chargeValue)
 	txins, err := w.CreateTxIns(utxos, txouts)
 	if err != nil {
 		log.Fatalf("createTxIn: %+v", err)
@@ -71,9 +72,8 @@ func (w *Wallet) CreateTx(toAddress string, value uint64) *message.Tx {
 	return message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
 }
 
-func (w *Wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo) {
+func (w *Wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue uint64) {
 	sort.Slice(w.Utxos, func(i, j int) bool { return w.Utxos[i].TxOut.Value > w.Utxos[j].TxOut.Value })
-	var totalVAlue uint64
 	for _, utxo := range w.Utxos {
 		utxos = append(utxos, utxo)
 		totalVAlue += utxo.TxOut.Value
@@ -94,7 +94,7 @@ func (w *Wallet) removeUtxo(u *message.Utxo) {
 	w.Utxos = newUtxos
 }
 
-func (w *Wallet) CreateTxOuts(toAddress string, value, feeValue uint64) []*message.TxOut {
+func (w *Wallet) CreateTxOuts(toAddress string, value, chargeValue uint64) []*message.TxOut {
 	var txout []*message.TxOut
 	lockingScript1 := script.CreateLockingScriptForPKH(util.DecodeAddress(toAddress))
 	txout = append(txout, &message.TxOut{
@@ -104,7 +104,7 @@ func (w *Wallet) CreateTxOuts(toAddress string, value, feeValue uint64) []*messa
 
 	lockingScript2 := script.CreateLockingScriptForPKH(util.DecodeAddress(w.GetAddress()))
 	txout = append(txout, &message.TxOut{
-		Value:         feeValue,
+		Value:         chargeValue,
 		LockingScript: common.NewVarStr(lockingScript2),
 	})
 	return txout
@@ -114,25 +114,41 @@ func (w *Wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]
 	var txins []*message.TxIn
 	for _, utxo := range utxos {
 
-		txin := &message.TxIn{
-			PreviousOutput: &message.OutPoint{
-				Hash: utxo.Hash,
-				N:    utxo.N,
-			},
-			UnlockingScript: utxo.TxOut.LockingScript,
-			Sequence:        0xFFFFFFFF,
+		outpoint := &message.OutPoint{
+			Hash: utxo.Hash,
+			N:    utxo.N,
 		}
 
-		tx := message.NewTx(
+		var tmpTxins []*message.TxIn
+		for _, otherUtxo := range utxos {
+			if utxo.Hash == otherUtxo.Hash && utxo.N == otherUtxo.N {
+				tmpTxins = append(tmpTxins, &message.TxIn{
+					PreviousOutput:  outpoint,
+					UnlockingScript: otherUtxo.TxOut.LockingScript,
+					Sequence:        0xFFFFFFFF,
+				})
+			} else {
+				otherOutpoint := &message.OutPoint{
+					Hash: otherUtxo.Hash,
+					N:    otherUtxo.N,
+				}
+				tmpTxins = append(tmpTxins, &message.TxIn{
+					PreviousOutput:  otherOutpoint,
+					UnlockingScript: common.NewVarStr([]byte{}),
+					Sequence:        0xFFFFFFFF,
+				})
+			}
+		}
+		tmpTx := message.NewTx(
 			uint32(1),
-			[]*message.TxIn{txin},
+			tmpTxins,
 			txouts,
 			uint32(0),
 		)
 
 		var sigHashCode = []byte{0x01, 0x00, 0x00, 0x00} // sig hash all
 		sigbatureHash := util.Hash256(bytes.Join([][]byte{
-			tx.Encode(),
+			tmpTx.Encode(),
 			sigHashCode,
 		}, []byte{}))
 
@@ -143,7 +159,11 @@ func (w *Wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]
 		log.Printf("signature len: %+v", len(signature))
 		var sigHashType = []byte{0x01}
 		signatureWithType := bytes.Join([][]byte{signature, sigHashType}, []byte{})
-		txin.UnlockingScript = script.CreateUnlockingScriptForPKH(signatureWithType, w.GetPublicKey())
+		txin := &message.TxIn{
+			PreviousOutput:  outpoint,
+			UnlockingScript: script.CreateUnlockingScriptForPKH(signatureWithType, w.GetPublicKey()),
+			Sequence:        0xFFFFFFFF,
+		}
 		txins = append(txins, txin)
 	}
 	log.Printf("==== txins len: %+v", len(txins))

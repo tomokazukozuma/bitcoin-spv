@@ -4,4 +4,4 @@ build:
 	go build -o cmd/exe ./cmd
 
 run:
-	go run cmd/main.go
+	go run cmd/main.go balance

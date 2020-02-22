@@ -95,10 +95,10 @@ func (s *SPV) MessageHandler() error {
 	needBlockSize := 1
 	var transaction *message.Tx
 	for {
-		//if needBlockSize == blockSize {
-		//	log.Printf("====== complete ======")
-		//	return nil
-		//}
+		if needBlockSize == blockSize {
+			log.Printf("====== complete ======")
+			return nil
+		}
 		buf, err := s.Client.ReceiveMessage(common.MessageHeaderLength)
 		if err != nil {
 			log.Printf("ReceiveMessage: %+v", err)

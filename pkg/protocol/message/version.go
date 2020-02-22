@@ -22,7 +22,7 @@ type Version struct {
 }
 
 func NewVersion(startHeight uint32) protocol.Message {
-	addrFrom := &common.NetworkAddress{
+	networkAddress := &common.NetworkAddress{
 		Services: uint64(1),
 		IP: [16]byte{
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x7F, 0x00, 0x00, 0x01,
@@ -33,8 +33,8 @@ func NewVersion(startHeight uint32) protocol.Message {
 		Version:     uint32(70015),
 		Services:    uint64(1),
 		Timestamp:   uint64(time.Now().Unix()),
-		AddrRecv:    addrFrom,
-		AddrFrom:    addrFrom,
+		AddrRecv:    networkAddress,
+		AddrFrom:    networkAddress,
 		Nonce:       uint64(0),
 		UserAgent:   common.NewVarStr([]byte("")),
 		StartHeight: startHeight,
