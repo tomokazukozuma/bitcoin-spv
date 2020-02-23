@@ -151,17 +151,14 @@ func (s *SPV) MessageHandler() error {
 				continue
 			}
 			blockSize++
-			log.Printf("blockSize: %+v", blockSize)
 
 			mb, _ := message.DecodeMerkleBlock(b)
-			//log.Printf("merkleblock: %+v", mb)
 			log.Printf("hashCount: %+v", mb.HashCount.Data)
 			if mb.HashCount.Data == 0 {
 				continue
 			}
 			log.Printf("block hash: %s", mb.GetBlockHash())
 			txHashes := mb.Validate()
-			//log.Printf("txHashes len: %+v", len(txHashes))
 			for _, txHash := range txHashes {
 				stringHash := hex.EncodeToString(util.ReverseBytes(txHash[:]))
 				log.Printf("string txHash: %s", stringHash)
@@ -176,8 +173,6 @@ func (s *SPV) MessageHandler() error {
 			}
 		} else if bytes.HasPrefix(msg.Command[:], []byte("tx")) {
 			tx, _ := message.DecodeTx(b)
-			log.Printf("tx: %+v", tx)
-			log.Printf("txhash: %+v", tx.ID())
 			utxos := tx.GetUtxo(s.Wallet.GetPublicKeyHash())
 			for _, utxo := range utxos {
 				s.Wallet.AddUtxo(utxo)
@@ -185,7 +180,6 @@ func (s *SPV) MessageHandler() error {
 			transaction = s.SendTxInv("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", 1000)
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
-			log.Printf("getdata: %+v", getData)
 			invs := getData.FilterInventoryByType(common.InvTypeMsgTx)
 			for _, invvect := range invs {
 				txID := transaction.ID()
