@@ -90,11 +90,11 @@ func (s *SPV) SendGetBlocks(startBlockHeaderHash string) error {
 	return nil
 }
 
-func (s *SPV) MessageHandler() error {
+func (s *SPV) MessageHandlerForBalance() error {
 	blockSize := 0
 	needBlockSize := 1
-	var transaction *message.Tx
 	for {
+		log.Printf("needBlockSize: %d, blockSize: %d", needBlockSize, blockSize)
 		if needBlockSize == blockSize {
 			log.Printf("====== complete ======")
 			return nil
@@ -140,7 +140,6 @@ func (s *SPV) MessageHandler() error {
 			}
 			log.Printf("inventory len: %+v", len(inventory))
 			needBlockSize = len(inventory)
-			log.Printf("needBlockSize: %+v", needBlockSize)
 			_, err := s.Client.SendMessage(message.NewGetData(inventory))
 			if err != nil {
 				log.Fatalf("inv: send getdata message error: %+v", err)
@@ -177,15 +176,63 @@ func (s *SPV) MessageHandler() error {
 			for _, utxo := range utxos {
 				s.Wallet.AddUtxo(utxo)
 			}
-			transaction = s.SendTxInv("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", 1000)
+		} else if bytes.HasPrefix(msg.Command[:], []byte("notfound")) {
+			getData, _ := message.DecodeGetData(b)
+			log.Printf("getdata: %+v", getData)
+			for _, v := range getData.Inventory {
+				log.Printf("inventory: %+v", v)
+			}
+		} else {
+			log.Printf("receive : other")
+		}
+	}
+}
+
+func (s *SPV) MessageHandlerForSend(tx *message.Tx) error {
+	var success = false
+	for {
+		if success {
+			log.Printf("====== complete send ======")
+			return nil
+		}
+		buf, err := s.Client.ReceiveMessage(common.MessageHeaderLength)
+		if err != nil {
+			log.Printf("ReceiveMessage: %+v", err)
+			return err
+		}
+		var header [24]byte
+		copy(header[:], buf)
+		msg := common.DecodeMessageHeader(header)
+		log.Printf("msg: %+v", msg)
+		b, err := s.Client.ReceiveMessage(msg.Length)
+		if err != nil {
+			return err
+		}
+		if !common.IsTestnet3(msg.Magic) {
+			log.Printf("not testnet3")
+			continue
+		}
+
+		if bytes.HasPrefix(msg.Command[:], []byte("verack")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("version")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("sendheaders")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("sendcmpct")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("addr")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("getheaders")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("feefilter")) {
+		} else if bytes.HasPrefix(msg.Command[:], []byte("ping")) {
+			ping := message.DecodePing(b)
+			pong := message.NewPong(ping.Nonce)
+			s.Client.SendMessage(pong)
 		} else if bytes.HasPrefix(msg.Command[:], []byte("getdata")) {
 			getData, _ := message.DecodeGetData(b)
 			invs := getData.FilterInventoryByType(common.InvTypeMsgTx)
 			for _, invvect := range invs {
-				txID := transaction.ID()
+				txID := tx.ID()
 				if bytes.Equal(invvect.Hash[:], txID[:]) {
 					fmt.Println("transaction send!")
-					s.Client.SendMessage(transaction)
+					s.Client.SendMessage(tx)
+					success = true
 				}
 			}
 		} else if bytes.HasPrefix(msg.Command[:], []byte("notfound")) {
@@ -199,7 +246,6 @@ func (s *SPV) MessageHandler() error {
 		}
 	}
 }
-
 func (s *SPV) SendTxInv(toAddress string, value uint64) *message.Tx {
 	transaction := s.Wallet.CreateTx(toAddress, value)
 	inv := message.NewInv(
@@ -208,11 +254,8 @@ func (s *SPV) SendTxInv(toAddress string, value uint64) *message.Tx {
 	).(*message.Inv)
 
 	log.Printf("transaction: %+v", transaction)
-	log.Printf("transaction txin count: %+v", transaction.TxInCount.Data)
-	log.Printf("transaction txout count: %+v", transaction.TxOutCount.Data)
 	log.Printf("transaction.ID: %+v", transaction.ID())
 	log.Printf("transaction encode: %+v", hex.EncodeToString(transaction.Encode()))
-	log.Printf("inv count: %+v", inv.Count)
 
 	_, err := s.Client.SendMessage(inv)
 	if err != nil {
