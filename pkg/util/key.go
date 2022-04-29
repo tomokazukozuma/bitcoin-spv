@@ -59,7 +59,7 @@ func generatePrivKey() (*big.Int, error) {
 	privKey := new(big.Int).SetBytes(b)
 	var one = new(big.Int).SetInt64(1)
 
-	// 1 < privkey < (n-1) の範囲になるように調整
+	// Adjust to the range 1 < privkey < (n-1)
 	n := new(big.Int).Sub(btcec.S256().N, one)
 	privKey.Mod(privKey, n)
 	privKey.Add(privKey, one)
