@@ -4,29 +4,42 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"log"
-
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/network"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/wallet"
+	"log"
 )
 
-type SPV struct {
-	Client network.Client
-	Wallet *wallet.Wallet
+type SPV interface {
+	// spv
+	Handshake(startHeight uint32) error
+	SendFilterLoad() error
+	SendGetBlocks(startBlockHeaderHash string) error
+	MessageHandlerForBalance() error
+	MessageHandlerForSend(tx *message.Tx) error
+	SendTxInv(toAddress string, value uint64) *message.Tx
+
+	// wallet
+	GetAddress() string
+	GetBalance() uint64
 }
 
-func NewSPV(client network.Client) *SPV {
+type spv struct {
+	network.Client
+	wallet.Wallet
+}
+
+func NewSPV(client network.Client) SPV {
 	wallet := wallet.NewWallet()
-	return &SPV{
+	return &spv{
 		Client: client,
 		Wallet: wallet,
 	}
 }
 
-func (s *SPV) Handshake(startHeight uint32) error {
+func (s *spv) Handshake(startHeight uint32) error {
 	v := message.NewVersion(startHeight)
 	_, err := s.Client.SendMessage(v)
 	if err != nil {
@@ -67,7 +80,7 @@ func (s *SPV) Handshake(startHeight uint32) error {
 	}
 }
 
-func (s *SPV) SendFilterLoad() error {
+func (s *spv) SendFilterLoad() error {
 	_, err := s.Client.SendMessage(message.NewFilterload(1024, 10, [][]byte{s.Wallet.GetPublicKeyHash()}))
 	if err != nil {
 		return err
@@ -75,7 +88,7 @@ func (s *SPV) SendFilterLoad() error {
 	return nil
 }
 
-func (s *SPV) SendGetBlocks(startBlockHeaderHash string) error {
+func (s *spv) SendGetBlocks(startBlockHeaderHash string) error {
 	startBlockHash, err := hex.DecodeString(startBlockHeaderHash)
 	if err != nil {
 		return err
@@ -90,7 +103,7 @@ func (s *SPV) SendGetBlocks(startBlockHeaderHash string) error {
 	return nil
 }
 
-func (s *SPV) MessageHandlerForBalance() error {
+func (s *spv) MessageHandlerForBalance() error {
 	blockSize := 0
 	needBlockSize := 1
 	for {
@@ -188,7 +201,7 @@ func (s *SPV) MessageHandlerForBalance() error {
 	}
 }
 
-func (s *SPV) MessageHandlerForSend(tx *message.Tx) error {
+func (s *spv) MessageHandlerForSend(tx *message.Tx) error {
 	var success = false
 	for {
 		if success {
@@ -246,7 +259,7 @@ func (s *SPV) MessageHandlerForSend(tx *message.Tx) error {
 		}
 	}
 }
-func (s *SPV) SendTxInv(toAddress string, value uint64) *message.Tx {
+func (s *spv) SendTxInv(toAddress string, value uint64) *message.Tx {
 	transaction := s.Wallet.CreateTx(toAddress, value)
 	inv := message.NewInv(
 		common.NewVarInt(uint64(1)),

@@ -26,7 +26,7 @@ func main() {
 	if err := spv.Handshake(0); err != nil {
 		log.Fatal("handshake error: ", err)
 	}
-	log.Printf("address: %s", spv.Wallet.GetAddress())
+	log.Printf("address: %s", spv.GetAddress())
 
 	command := os.Args[1]
 	switch command {
@@ -45,7 +45,7 @@ func main() {
 			log.Fatal("main: message handler err:", err)
 		}
 
-		balance := spv.Wallet.GetBalance()
+		balance := spv.GetBalance()
 		log.Printf("Balance: %d", balance)
 	case "send":
 		log.Printf("send")
@@ -62,7 +62,7 @@ func main() {
 		if err := spv.MessageHandlerForBalance(); err != nil {
 			log.Fatal("main: message handler err:", err)
 		}
-		balance := spv.Wallet.GetBalance()
+		balance := spv.GetBalance()
 		log.Printf("Balance: %d", balance)
 		transaction := spv.SendTxInv("mgavKSS3hKCAyLKFhy5VHTYu5CMj8AAxQV", 1000)
 		if err := spv.MessageHandlerForSend(transaction); err != nil {
