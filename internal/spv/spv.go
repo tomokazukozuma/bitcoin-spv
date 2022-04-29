@@ -14,11 +14,11 @@ import (
 )
 
 type SPV struct {
-	Client *network.Client
+	Client network.Client
 	Wallet *wallet.Wallet
 }
 
-func NewSPV(client *network.Client) *SPV {
+func NewSPV(client network.Client) *SPV {
 	wallet := wallet.NewWallet()
 	return &SPV{
 		Client: client,

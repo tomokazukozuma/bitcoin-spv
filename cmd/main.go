@@ -16,10 +16,10 @@ func main() {
 	}
 
 	// connect tcp
-	//c := network.NewClient("seed.tbtc.petertodd.org:18333")
-	c := network.NewClient("18.224.59.186:18333")
-	defer c.Conn.Close()
-	log.Printf("remote addr： %s", c.Conn.RemoteAddr().String())
+	c := network.NewClient("seed.tbtc.petertodd.org:18333")
+	//c := network.NewClient("18.224.59.186:18333")
+	defer c.Close()
+	log.Printf("remote addr： %s", c.RemoteAddress().String())
 
 	// handshake
 	spv := spv.NewSPV(c)
