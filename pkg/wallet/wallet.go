@@ -11,31 +11,43 @@ import (
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
-type Wallet struct {
+type Wallet interface {
+	GetPublicKey() []byte
+	GetPublicKeyHash() []byte
+	GetAddress() string
+	AddUtxo(utxo *message.Utxo)
+	GetBalance() uint64
+	CreateTx(toAddress string, value uint64) *message.Tx
+	CreateTxOuts(toAddress string, value, chargeValue uint64) []*message.TxOut
+	CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error)
+	Sign(sigHash []byte) ([]byte, error)
+}
+
+type wallet struct {
 	Key   *util.Key
 	Utxos []*message.Utxo
 }
 
-func NewWallet() *Wallet {
-	return &Wallet{
+func NewWallet() Wallet {
+	return &wallet{
 		Key:   util.NewKey(),
 		Utxos: []*message.Utxo{},
 	}
 }
 
-func (w *Wallet) GetPublicKey() []byte {
+func (w *wallet) GetPublicKey() []byte {
 	return w.Key.PublicKey.SerializeUncompressed()
 }
 
-func (w *Wallet) GetPublicKeyHash() []byte {
+func (w *wallet) GetPublicKeyHash() []byte {
 	return util.Hash160(w.GetPublicKey())
 }
 
-func (w *Wallet) GetAddress() string {
+func (w *wallet) GetAddress() string {
 	return util.EncodeAddress(w.GetPublicKey())
 }
 
-func (w *Wallet) AddUtxo(utxo *message.Utxo) {
+func (w *wallet) AddUtxo(utxo *message.Utxo) {
 	alreadyExists := false
 	for _, u := range w.Utxos {
 		if u.Hash == utxo.Hash && u.N == utxo.N {
@@ -49,7 +61,7 @@ func (w *Wallet) AddUtxo(utxo *message.Utxo) {
 	w.Utxos = append(w.Utxos, utxo)
 }
 
-func (w *Wallet) GetBalance() uint64 {
+func (w *wallet) GetBalance() uint64 {
 	var balance uint64
 	for _, v := range w.Utxos {
 		balance += v.TxOut.Value
@@ -57,7 +69,7 @@ func (w *Wallet) GetBalance() uint64 {
 	return balance
 }
 
-func (w *Wallet) CreateTx(toAddress string, value uint64) *message.Tx {
+func (w *wallet) CreateTx(toAddress string, value uint64) *message.Tx {
 	utxos, totalValue := w.getEnoughUtxos(value)
 	fee := util.CalculateFee(10, len(utxos))
 	chargeValue := totalValue - value - fee
@@ -72,7 +84,7 @@ func (w *Wallet) CreateTx(toAddress string, value uint64) *message.Tx {
 	return message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
 }
 
-func (w *Wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue uint64) {
+func (w *wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue uint64) {
 	sort.Slice(w.Utxos, func(i, j int) bool { return w.Utxos[i].TxOut.Value > w.Utxos[j].TxOut.Value })
 	for _, utxo := range w.Utxos {
 		utxos = append(utxos, utxo)
@@ -84,7 +96,7 @@ func (w *Wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue
 	return
 }
 
-func (w *Wallet) removeUtxo(u *message.Utxo) {
+func (w *wallet) removeUtxo(u *message.Utxo) {
 	var newUtxos []*message.Utxo
 	for _, utxo := range w.Utxos {
 		if u.Hash != utxo.Hash && u.N != utxo.N {
@@ -94,7 +106,7 @@ func (w *Wallet) removeUtxo(u *message.Utxo) {
 	w.Utxos = newUtxos
 }
 
-func (w *Wallet) CreateTxOuts(toAddress string, value, chargeValue uint64) []*message.TxOut {
+func (w *wallet) CreateTxOuts(toAddress string, value, chargeValue uint64) []*message.TxOut {
 	var txout []*message.TxOut
 	lockingScript1 := script.CreateLockingScriptForPKH(util.DecodeAddress(toAddress))
 	txout = append(txout, &message.TxOut{
@@ -110,7 +122,7 @@ func (w *Wallet) CreateTxOuts(toAddress string, value, chargeValue uint64) []*me
 	return txout
 }
 
-func (w *Wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
+func (w *wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]*message.TxIn, error) {
 	var txins []*message.TxIn
 	for _, utxo := range utxos {
 
@@ -170,6 +182,6 @@ func (w *Wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]
 	return txins, nil
 }
 
-func (w *Wallet) Sign(sigHash []byte) ([]byte, error) {
+func (w *wallet) Sign(sigHash []byte) ([]byte, error) {
 	return w.Key.Sign(sigHash)
 }
