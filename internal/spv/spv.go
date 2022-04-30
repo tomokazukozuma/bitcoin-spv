@@ -21,6 +21,9 @@ type SPV interface {
 	MessageHandlerForSend(tx *message.Tx) error
 	SendTxInv(toAddress string, value uint64) *message.Tx
 
+	// client
+	Close()
+
 	// wallet
 	GetAddress() string
 	GetBalance() uint64
@@ -31,7 +34,10 @@ type spv struct {
 	wallet.Wallet
 }
 
-func NewSPV(client network.Client) SPV {
+func NewSPV() SPV {
+	// connect to node
+	client := network.NewClient("seed.tbtc.petertodd.org:18333")
+
 	wallet := wallet.NewWallet()
 	return &spv{
 		Client: client,

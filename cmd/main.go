@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/tomokazukozuma/bitcoin-spv/internal/spv"
-	"github.com/tomokazukozuma/bitcoin-spv/pkg/network"
 )
 
 func main() {
@@ -15,14 +14,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// connect tcp
-	c := network.NewClient("seed.tbtc.petertodd.org:18333")
-	//c := network.NewClient("18.224.59.186:18333")
-	defer c.Close()
-	log.Printf("remote addr： %s", c.RemoteAddress().String())
-
-	// handshake
-	spv := spv.NewSPV(c)
+	spv := spv.NewSPV()
+	defer spv.Close()
 	if err := spv.Handshake(0); err != nil {
 		log.Fatal("handshake error: ", err)
 	}
