@@ -273,8 +273,8 @@ func (s *spv) SendTxInv(toAddress string, value uint64) *message.Tx {
 	).(*message.Inv)
 
 	log.Printf("transaction: %+v", transaction)
-	log.Printf("transaction.ID: %+v", transaction.ID())
-	log.Printf("transaction encode: %+v", hex.EncodeToString(transaction.Encode()))
+	log.Printf("transaction.ID: %x", transaction.ID())
+	log.Printf("transaction encode: %x", transaction.Encode())
 
 	_, err := s.Client.SendMessage(inv)
 	if err != nil {
