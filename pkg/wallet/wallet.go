@@ -159,12 +159,12 @@ func (w *wallet) CreateTxIns(utxos []*message.Utxo, txouts []*message.TxOut) ([]
 		)
 
 		var sigHashCode = []byte{0x01, 0x00, 0x00, 0x00} // sig hash all
-		sigbatureHash := util.Hash256(bytes.Join([][]byte{
+		signatureHash := util.Hash256(bytes.Join([][]byte{
 			tmpTx.Encode(),
 			sigHashCode,
 		}, []byte{}))
 
-		signature, err := w.Sign(sigbatureHash)
+		signature, err := w.Sign(signatureHash)
 		if err != nil {
 			return nil, err
 		}
