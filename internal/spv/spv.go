@@ -195,6 +195,9 @@ func (s *spv) MessageHandlerForBalance() error {
 			for _, utxo := range utxos {
 				s.Wallet.AddUtxo(utxo)
 			}
+			for _, txin := range tx.TxIn {
+				s.Wallet.RemoveUtxo(txin)
+			}
 		} else if bytes.HasPrefix(msg.Command[:], []byte("notfound")) {
 			getData, _ := message.DecodeGetData(b)
 			log.Printf("getdata: %+v", getData)
