@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
+	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
 
 type TxIn struct {
@@ -39,7 +40,7 @@ func (p *OutPoint) Encode() []byte {
 
 func DecodeTxIn(b []byte) (*TxIn, error) {
 	var hash [32]byte
-	copy(hash[:], b[0:32])
+	copy(hash[:], util.ReverseBytes(b[0:32]))
 	n := binary.LittleEndian.Uint32(b[32:36])
 	out := &OutPoint{
 		Hash: hash,
