@@ -48,15 +48,10 @@ func (w *wallet) GetAddress() string {
 }
 
 func (w *wallet) AddUtxo(utxo *message.Utxo) {
-	alreadyExists := false
 	for _, u := range w.Utxos {
 		if u.Hash == utxo.Hash && u.N == utxo.N {
-			alreadyExists = true
+			return
 		}
-	}
-	// TODO TxInで使われていないかチェック
-	if alreadyExists {
-		return
 	}
 	w.Utxos = append(w.Utxos, utxo)
 }
