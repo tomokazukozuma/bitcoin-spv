@@ -16,6 +16,7 @@ type Wallet interface {
 	GetPublicKeyHash() []byte
 	GetAddress() string
 	AddUtxo(utxo *message.Utxo)
+	RemoveUtxo(txin *message.TxIn)
 	GetBalance() uint64
 	CreateTx(toAddress string, value uint64) *message.Tx
 	CreateTxOuts(toAddress string, value, chargeValue uint64) []*message.TxOut
@@ -73,8 +74,8 @@ func (w *wallet) CreateTx(toAddress string, value uint64) *message.Tx {
 	if err != nil {
 		log.Fatalf("createTxIn: %+v", err)
 	}
-	for _, utxo := range utxos {
-		w.removeUtxo(utxo)
+	for _, txin := range txins {
+		w.RemoveUtxo(txin)
 	}
 	return message.NewTx(uint32(1), txins, txouts, uint32(0)).(*message.Tx)
 }
@@ -91,10 +92,10 @@ func (w *wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue
 	return
 }
 
-func (w *wallet) removeUtxo(u *message.Utxo) {
+func (w *wallet) RemoveUtxo(txin *message.TxIn) {
 	var newUtxos []*message.Utxo
 	for _, utxo := range w.Utxos {
-		if u.Hash != utxo.Hash && u.N != utxo.N {
+		if txin.PreviousOutput.Hash != utxo.Hash && txin.PreviousOutput.N != utxo.N {
 			newUtxos = append(newUtxos, utxo)
 		}
 	}
