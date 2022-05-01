@@ -95,9 +95,10 @@ func (w *wallet) getEnoughUtxos(value uint64) (utxos []*message.Utxo, totalVAlue
 func (w *wallet) RemoveUtxo(txin *message.TxIn) {
 	var newUtxos []*message.Utxo
 	for _, utxo := range w.Utxos {
-		if txin.PreviousOutput.Hash != utxo.Hash && txin.PreviousOutput.N != utxo.N {
-			newUtxos = append(newUtxos, utxo)
+		if txin.PreviousOutput.Hash == utxo.Hash && txin.PreviousOutput.N == utxo.N {
+			continue
 		}
+		newUtxos = append(newUtxos, utxo)
 	}
 	w.Utxos = newUtxos
 }
