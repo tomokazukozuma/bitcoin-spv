@@ -3,7 +3,6 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
-
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
@@ -30,10 +29,14 @@ func (in *TxIn) Encode() []byte {
 }
 
 func (p *OutPoint) Encode() []byte {
+	hash := make([]byte, 32)
+	copy(hash, p.Hash[:])
+	util.ReverseBytes(hash)
+
 	n := make([]byte, 4)
 	binary.LittleEndian.PutUint32(n, p.N)
 	return bytes.Join([][]byte{
-		p.Hash[:],
+		hash,
 		n,
 	}, []byte{})
 }
