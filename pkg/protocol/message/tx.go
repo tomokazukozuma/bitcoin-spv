@@ -92,8 +92,8 @@ func DecodeTx(b []byte) (*Tx, error) {
 			return nil, err
 		}
 		txIns = append(txIns, txIn)
-		len := len(txIn.Encode())
-		b = b[len:]
+		length := len(txIn.Encode())
+		b = b[length:]
 	}
 
 	var txOuts []*TxOut
@@ -108,8 +108,8 @@ func DecodeTx(b []byte) (*Tx, error) {
 			return nil, err
 		}
 		txOuts = append(txOuts, txOut)
-		len := len(txOut.Encode())
-		b = b[len:]
+		length := len(txOut.Encode())
+		b = b[length:]
 	}
 	if len(b) != 4 {
 		return nil, fmt.Errorf("decode Transaction failed, invalid input: %v", b)
