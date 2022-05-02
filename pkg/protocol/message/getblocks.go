@@ -25,7 +25,8 @@ type GetBlocks struct {
 
 func NewGetBlocks(version uint32, blockLocatorHashes [][32]byte, hashStop [32]byte) protocol.Message {
 	var reversedHashStop [32]byte
-	copy(reversedHashStop[:], util.ReverseBytes(hashStop[:]))
+	copy(reversedHashStop[:], hashStop[:])
+	util.ReverseBytes(reversedHashStop[:])
 
 	length := len(blockLocatorHashes)
 	hashCount := common.NewVarInt(uint64(length))

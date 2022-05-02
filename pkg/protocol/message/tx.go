@@ -46,7 +46,8 @@ func (tx *Tx) Command() [12]byte {
 func (tx *Tx) ID() [32]byte {
 	var res [32]byte
 	hash := util.Hash256(tx.Encode())
-	copy(res[:], util.ReverseBytes(hash))
+	copy(res[:], hash)
+	util.ReverseBytes(res[:])
 	return res
 }
 
