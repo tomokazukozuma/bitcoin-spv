@@ -52,7 +52,8 @@ func (m *MerkleBlock) GetBlockHash() string {
 	}, []byte{})
 
 	copy(res[:], util.Hash256(bs))
-	return hex.EncodeToString(util.ReverseBytes(res[:]))
+	util.ReverseBytes(res[:])
+	return hex.EncodeToString(res[:])
 }
 
 func DecodeMerkleBlock(b []byte) (*MerkleBlock, error) {
