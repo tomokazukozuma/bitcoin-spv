@@ -37,6 +37,7 @@ type spv struct {
 func NewSPV() SPV {
 	// connect to node
 	client := network.NewClient("seed.tbtc.petertodd.org:18333")
+	//client := network.NewClient("testnet-seed.bitcoin.jonasschnelli.ch:18333")
 
 	wallet := wallet.NewWallet()
 	return &spv{

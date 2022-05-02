@@ -43,7 +43,8 @@ func (p *OutPoint) Encode() []byte {
 
 func DecodeTxIn(b []byte) (*TxIn, error) {
 	var hash [32]byte
-	copy(hash[:], util.ReverseBytes(b[0:32]))
+	copy(hash[:], b[0:32])
+	util.ReverseBytes(hash[:])
 	n := binary.LittleEndian.Uint32(b[32:36])
 	out := &OutPoint{
 		Hash: hash,
