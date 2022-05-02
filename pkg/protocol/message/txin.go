@@ -3,6 +3,7 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
+
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 )
