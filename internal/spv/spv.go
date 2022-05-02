@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"log"
+
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/network"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/common"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/protocol/message"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/util"
 	"github.com/tomokazukozuma/bitcoin-spv/pkg/wallet"
-	"log"
 )
 
 type SPV interface {
@@ -101,7 +102,8 @@ func (s *spv) SendGetBlocks(startBlockHeaderHash string) error {
 		return err
 	}
 	var reversedStartBlockHeaderHash [32]byte
-	copy(reversedStartBlockHeaderHash[:], util.ReverseBytes(startBlockHash))
+	copy(reversedStartBlockHeaderHash[:], startBlockHash)
+	util.ReverseBytes(reversedStartBlockHeaderHash[:])
 	getblocks := message.NewGetBlocks(uint32(70015), [][32]byte{reversedStartBlockHeaderHash}, message.ZeroHash)
 	_, err = s.Client.SendMessage(getblocks)
 	if err != nil {
@@ -179,7 +181,10 @@ func (s *spv) MessageHandlerForBalance() error {
 			log.Printf("block hash: %s", mb.GetBlockHash())
 			txHashes := mb.Validate()
 			for _, txHash := range txHashes {
-				stringHash := hex.EncodeToString(util.ReverseBytes(txHash[:]))
+				var reverseTxHash [32]byte
+				copy(reverseTxHash[:], txHash[:])
+				util.ReverseBytes(reverseTxHash[:])
+				stringHash := hex.EncodeToString(reverseTxHash[:])
 				log.Printf("string txHash: %s", stringHash)
 			}
 			var inventory []*common.InvVect
