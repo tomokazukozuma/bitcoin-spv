@@ -14,9 +14,9 @@ import (
 type Tx struct {
 	Version    uint32
 	TxInCount  *common.VarInt
-	TxIn       []*TxIn
+	TxIns      []*TxIn
 	TxOutCount *common.VarInt
-	TxOut      []*TxOut
+	TxOuts     []*TxOut
 	LockTime   uint32
 }
 
@@ -26,13 +26,13 @@ type Utxo struct {
 	TxOut *TxOut
 }
 
-func NewTx(version uint32, txin []*TxIn, txout []*TxOut, locktime uint32) protocol.Message {
+func NewTx(version uint32, txIns []*TxIn, txOuts []*TxOut, locktime uint32) protocol.Message {
 	return &Tx{
 		Version:    version,
-		TxInCount:  common.NewVarInt(uint64(len(txin))),
-		TxIn:       txin,
-		TxOutCount: common.NewVarInt(uint64(len(txout))),
-		TxOut:      txout,
+		TxInCount:  common.NewVarInt(uint64(len(txIns))),
+		TxIns:      txIns,
+		TxOutCount: common.NewVarInt(uint64(len(txOuts))),
+		TxOuts:     txOuts,
 		LockTime:   locktime,
 	}
 }
@@ -58,12 +58,12 @@ func (tx *Tx) Encode() []byte {
 	binary.LittleEndian.PutUint32(lockTimeBytes, tx.LockTime)
 
 	txInBytes := [][]byte{}
-	for _, in := range tx.TxIn {
+	for _, in := range tx.TxIns {
 		txInBytes = append(txInBytes, in.Encode())
 	}
 
 	txOutBytes := [][]byte{}
-	for _, out := range tx.TxOut {
+	for _, out := range tx.TxOuts {
 		txOutBytes = append(txOutBytes, out.Encode())
 	}
 
@@ -119,16 +119,16 @@ func DecodeTx(b []byte) (*Tx, error) {
 	return &Tx{
 		Version:    version,
 		TxInCount:  txInCount,
-		TxIn:       txIns,
+		TxIns:      txIns,
 		TxOutCount: txOutCount,
-		TxOut:      txOuts,
+		TxOuts:     txOuts,
 		LockTime:   lockTime,
 	}, nil
 }
 
 func (tx *Tx) GetUtxo(pubkeyHash []byte) []*Utxo {
 	var utxo []*Utxo
-	for index, txout := range tx.TxOut {
+	for index, txout := range tx.TxOuts {
 		// TODO locking scriptの種類をみて、データ部だけのチェックにする
 		if bytes.HasPrefix(txout.LockingScript.Data, script.CreateLockingScriptForPKH(pubkeyHash)) {
 			utxo = append(utxo, &Utxo{
