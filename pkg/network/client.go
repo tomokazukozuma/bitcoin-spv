@@ -45,6 +45,6 @@ func (c *client) RemoteAddress() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-func (c *client) Close()  {
+func (c *client) Close() {
 	c.Conn.Close()
 }
